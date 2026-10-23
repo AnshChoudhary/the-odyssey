@@ -57,7 +57,59 @@ https://github.com/user/repo/blob/main/assets/flow.mp4
 ✅ **Legend** explaining map symbols and visual language  
 ✅ **Source tags** (Slack, Zoom, GitHub) linking work to its origin  
 ✅ **Compass rose** and period-appropriate typography  
-✅ **Example data** clearly marked throughout  
+✅ **Example data** clearly marked throughout
+
+### ✨ AI Check-In Features
+
+#### 📜 Weekly Captain's Log (~2 minutes)
+
+![Captain's Log](assets/captains-log.png)
+
+A scroll delivered by **Athena** (your AI guide) summarizing your week:
+- **Islands Reached** (completed work)
+- **Stormy Waters** (needs attention)
+- **Sinking Islands** (forgotten commitments — private by default)
+
+**Interactive Corrections:**
+- **"Aye, that's right"** — Confirm the AI got it right
+- **"Not quite"** — Inline edit to correct the details
+- **"Missing context"** — Add a one-line note about what the AI missed
+
+**Horizon View:**
+- **Ithaca** (Q4 expectations) shown as destination with progress bar and coaching
+- **The Sirens** (distractions) — e.g., "8 hours in meetings slowed your API migration"
+- **Crew Gifts** (Slack kudos from teammates)
+
+Corrections visibly update the map. **"Draft — you're the captain"** label reinforces that this is your truth, not an evaluation.
+
+#### ⚔️ Monthly Three Trials (~5 minutes)
+
+![Three Trials](assets/three-trials.png)
+
+The month as an epic chapter. AI identifies your 3 hardest problems as monsters:
+- **🦹 The Cyclops** = blocker (single point of failure)
+- **⚡ Poseidon's Storm** = incident (production fire, cascade failure)
+- **⚓ Scylla & Charybdis** = trade-off (no good choice, pick the least bad)
+
+**Per Trial:**
+- **Confirm** — AI got it right
+- **Swap for a harder one** — Add your own challenge
+- **Add backstory** — Why was this hard? Who helped? What would you do differently?
+
+**Epic Rendering:**
+After you've confirmed or edited all three trials, the AI renders your month as mock-epic prose incorporating your words:
+
+> *"In the waning days of October, you faced three trials... First came The Cyclops, guardian of the legacy fortress. Spent 3 weeks untangling session logic. Teammate A pair-programmed the critical refactor..."*
+
+**Privacy:** Corrections private by default. You choose what to share with your manager.
+
+### Check-In Philosophy
+
+🎯 **Draft, not verdict** — Check-ins are collaborative corrections, not performance reviews  
+🎮 **Feels like play** — Swapping monsters, writing epic backstories, correcting Athena's observations  
+🏷️ **Labeled data** — Your corrections teach the AI what "hard" means to you, improving future summaries  
+📊 **No scores or rankings** — Direction and coaching, never grades  
+🔒 **Privacy-first** — Forgotten work and backstory edits are private unless you choose to share  
 
 ### Privacy Principles
 
@@ -139,14 +191,16 @@ The Work Odyssey is designed to be embedded into existing HR systems, not to rep
 
 ```
 /
-├── index.html              # The complete working prototype
+├── index.html                    # The complete working prototype
 ├── assets/
-│   ├── mockup.png         # Main map view screenshot
-│   ├── deck.png           # Deck view screenshot
-│   ├── deck-card.png      # Crew detail card screenshot
-│   └── flow.mp4           # Demo video of the interaction flow
-├── README.md              # This file
-└── LICENSE                # MIT License
+│   ├── mockup.png               # Main map view screenshot
+│   ├── deck.png                 # Deck view screenshot
+│   ├── deck-card.png            # Crew detail card screenshot
+│   ├── captains-log.png         # Weekly Captain's Log check-in
+│   ├── three-trials.png         # Monthly Three Trials check-in
+│   └── flow.mp4                 # Demo video of the interaction flow
+├── README.md                    # This file
+└── LICENSE                      # MIT License
 ```
 
 ## Contributing
