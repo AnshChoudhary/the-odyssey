@@ -7,6 +7,7 @@
 .wk{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:14px}.wk button{background:none;border:1px solid #8a6a3f;color:#efe3c8;border-radius:4px;width:28px;height:28px}
 .tg{display:flex;align-items:center;gap:8px;font-size:14px}.sw{width:40px;height:22px;background:#6f8f5a;border-radius:11px;position:relative}.sw:after{content:'';position:absolute;right:3px;top:3px;width:16px;height:16px;background:#fff;border-radius:50%}
 .ex{background:#b5452f;color:#fff;font-size:11px;padding:3px 8px;border-radius:3px;text-transform:uppercase;letter-spacing:1px}
+.tbtn{background:#2f5d62;color:#efe3c8;border:1px solid #8a6a3f;padding:8px 14px;border-radius:4px;font:600 13px Inter;cursor:pointer;transition:.2s}.tbtn:hover{background:#3a6e73}
 .main{display:flex;height:840px}.map{width:1060px;padding:16px}
 .side{width:380px;background:#efe3c8;border-left:3px double #8a6a3f;padding:22px;display:flex;flex-direction:column;gap:18px}
 h2{font-family:'IM Fell English',serif;font-size:24px;font-weight:400}h3{font-family:'IM Fell English',serif;font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#8a6a3f;font-weight:400}
@@ -17,8 +18,46 @@ h2{font-family:'IM Fell English',serif;font-size:24px;font-weight:400}h3{font-fa
 .stats{display:flex;gap:10px}.stat{flex:1;text-align:center;background:#f7eedb;border:1px solid #c9b48a;border-radius:6px;padding:10px 4px}.stat b{display:block;font-family:'IM Fell English',serif;font-size:32px;font-weight:400}.stat span{font-size:11px;text-transform:uppercase;letter-spacing:1px}
 .log{font-family:Caveat,cursive;font-size:20px;line-height:1.25;color:#4a3520}
 .foot{margin-top:auto;font-size:11px;color:#7a6548}
+.modal{position:fixed;left:0;top:0;width:1440px;height:900px;background:#0008;display:none;align-items:center;justify-content:center;z-index:100;opacity:0;transition:opacity .3s}
+.modal.on{display:flex;opacity:1}
+.scroll{width:900px;max-height:820px;background:linear-gradient(#f4e7c8,#ead6a8);border:4px double #5b4630;border-radius:8px;padding:32px 40px;overflow-y:auto;box-shadow:0 16px 48px #0006;position:relative}
+.scroll h1{font:400 38px 'IM Fell English';text-align:center;letter-spacing:3px;margin-bottom:6px}
+.scroll .dr{text-align:center;font:italic 15px 'IM Fell English';color:#7a2e1f;margin-bottom:24px}
+.ath{display:flex;gap:16px;align-items:flex-start;margin-bottom:24px;padding:18px;background:#fff8e8;border:2px solid #c9b48a;border-radius:8px}
+.ath img{width:56px;height:56px;border-radius:50%;border:2px solid #8a6a3f;flex:none}
+.ath .msg{font:19px Caveat;color:#4a3520;line-height:1.4}
+.sec{margin:28px 0}.sec h2{font:400 26px 'IM Fell English';margin-bottom:14px;color:#3b2a1a}
+.icard{background:#f7eedb;border:2px solid #c9b48a;border-radius:8px;padding:18px;margin:12px 0;position:relative;transition:.25s}
+.icard.done{opacity:.6;border-color:#6f8f5a}.icard.moved{transform:translateX(-8px);box-shadow:0 4px 12px #6f8f5a44}
+.icard h3{font:600 17px Inter;margin-bottom:8px}.icard .im{font:16px Caveat;color:#5b4630;margin:8px 0}
+.icard .act{display:flex;gap:8px;margin-top:12px}.icard .act button{flex:1;padding:8px;border-radius:5px;font:600 12px Inter;border:1px solid #8a6a3f;background:#fff;cursor:pointer;transition:.2s}
+.icard .act button:hover{background:#f4e7c8}.icard .act .ok{background:#6f8f5a;color:#fff;border-color:#6f8f5a}.icard .act .ok:hover{background:#7a9f6a}
+.icard .edt{display:none;margin-top:10px}.icard .edt.on{display:block}.icard .edt input,.icard .edt textarea{width:100%;padding:8px;border:1px solid #c9b48a;border-radius:4px;font:14px Inter;background:#fff8e8;margin-top:6px}
+.icard .edt textarea{min-height:60px;font-family:Caveat;font-size:16px;resize:vertical}
+.icard .edt button{margin-top:8px;padding:7px 16px;background:#2f5d62;color:#fff;border:1px solid #2f5d62;border-radius:4px;font:600 12px Inter;cursor:pointer}
+.hrz{margin:24px 0;text-align:center;font:italic 18px Caveat;color:#8a6a3f}.hrz:before,.hrz:after{content:'';display:inline-block;width:120px;height:1px;background:#c9b48a;vertical-align:middle;margin:0 16px}
+.ith{background:#fff3e8;border:3px solid #d4a76a;border-radius:12px;padding:22px;margin:18px 0;position:relative}.ith:before{content:'✦';position:absolute;left:-16px;top:-12px;font-size:32px;color:#d4a76a}
+.ith h3{font:700 19px Inter;color:#7a2e1f;margin-bottom:10px}.ith .im{font:18px Caveat;color:#5b4630;margin:10px 0}
+.ith .prog{display:flex;align-items:center;gap:12px;margin:14px 0;font:italic 14px 'IM Fell English'}.ith .prog .bar{flex:1;height:12px;background:#e2cc9c;border:1.5px solid #8a6a3f;border-radius:6px;overflow:hidden}.ith .prog .bar div{height:100%;background:#6b8f5a;transition:width .6s}
+.gift{display:flex;gap:12px;padding:16px;background:#fff8e8;border:2px dashed #c9b48a;border-radius:8px;margin:10px 0;align-items:center}
+.gift .av{width:44px;height:44px;border-radius:50%;background:#d9cfb0;border:2px solid#8a6a3f;display:flex;align-items:center;justify-content:center;font:700 20px Caveat;flex:none}
+.gift .txt{flex:1;font:17px Caveat;color:#4a3520}
+.trial{background:#f4ead2;border:3px solid #8a6a3f;border-radius:12px;padding:24px;margin:20px 0;position:relative}
+.trial .mon{position:absolute;right:20px;top:20px;font:700 48px 'IM Fell English';color:#b5452f;opacity:.15}
+.trial h3{font:700 21px Inter;color:#3b2a1a;margin-bottom:12px}.trial .typ{display:inline-block;background:#b5452f;color:#fff;padding:4px 10px;border-radius:4px;font:600 11px Inter;letter-spacing:1px;margin-bottom:10px}
+.trial .desc{font:19px Caveat;color:#4a3520;margin:12px 0;line-height:1.4}
+.trial .crew{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.trial .crew span{background:#e2cc9c;border:1px solid#8a6a3f;padding:4px 10px;border-radius:12px;font:13px Inter}
+.trial .act{display:flex;gap:10px;margin-top:16px}.trial .act button{padding:9px 16px;border-radius:5px;font:600 13px Inter;border:1px solid#8a6a3f;background:#fff;cursor:pointer;transition:.2s}
+.trial .act button:hover{background:#f4e7c8}.trial .act .ok{background:#6f8f5a;color:#fff;border-color:#6f8f5a}.trial .act .ok:hover{background:#7a9f6a}
+.trial .edt{display:none;margin-top:14px}.trial .edt.on{display:block}.trial .edt textarea{width:100%;padding:10px;border:1px solid#c9b48a;border-radius:4px;font:16px Caveat;background:#fff8e8;min-height:80px;resize:vertical;margin-bottom:8px}
+.trial .edt input{width:100%;padding:8px;border:1px solid#c9b48a;border-radius:4px;font:14px Inter;background:#fff8e8;margin-bottom:8px}
+.trial .edt button{padding:8px 16px;background:#2f5d62;color:#fff;border:1px solid#2f5d62;border-radius:4px;font:600 12px Inter;cursor:pointer;margin-right:8px}
+.epic{background:#f7eedb;border:3px double#5b4630;border-radius:8px;padding:24px;margin:20px 0;font:20px/1.6 Caveat;color:#3b2a1a}.epic b{font-weight:700;color:#7a2e1f}
+.mcls{position:absolute;right:16px;top:16px;background:#f7eedb;border:2px solid#5b4630;width:36px;height:36px;border-radius:50%;font:24px 'IM Fell English';cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.2s}.mcls:hover{background:#e2cc9c}
 </style></head><body>
 <div class="top"><div class="logo">ATLAS<i>working title</i></div><span class="ex">Example data</span>
+<button class="tbtn" onclick="openCaptainsLog()">📜 Captain's Log</button>
+<button class="tbtn" onclick="openThreeTrials()">⚔️ Three Trials</button>
 <div class="wk"><button>‹</button><b>Week 43 · Oct 19 – 25</b><button>›</button></div>
 <div class="tg">🔒 Private view <div class="sw"></div></div></div>
 <div class="main"><div class="map" id="mapwrap">
@@ -202,5 +241,331 @@ function zoomIn(){document.getElementById('mapsvg').classList.add('zoom');docume
 function zoomOut(){closeCard();document.getElementById('deck').classList.remove('on');setTimeout(()=>{document.getElementById('mapsvg').classList.remove('zoom');document.querySelector('.side').classList.remove('fade')},300)}
 buildDeck();{const d=document.querySelector('.crew[data-id="D"]');const [n,r]=d.querySelectorAll('text');n.setAttribute('x',58);n.setAttribute('y',-40);n.setAttribute('text-anchor','start');r.setAttribute('x',58);r.setAttribute('y',-24);r.setAttribute('text-anchor','start');}document.getElementById('deck').addEventListener('click',e=>{if(e.target.id==='decksvg'||e.target.tagName==='rect'&&!e.target.closest('.crew'))closeCard()});
 if(location.hash==='#deck'){zoomIn()}
+
+// Captain's Log data and functions
+const LOG_DATA={
+  completed:[
+    {id:1,title:'Merged: Auth refactor',source:'GitHub',detail:'3-week project with Teammate A, shipped Monday'},
+    {id:2,title:'Reviewed 6 PRs',source:'GitHub',detail:'Teammate C, D, and F pull requests'},
+    {id:3,title:'Closed: Onboarding doc',source:'Slack',detail:'Finalized in #example-docs thread'}
+  ],
+  stormy:[
+    {id:4,title:'Q4 roadmap review',source:'Zoom',detail:'Overdue 3 days, meeting scheduled yesterday but rescheduled'},
+    {id:5,title:'Reply re: vendor contract',source:'Slack',detail:'Teammate B waiting on renewal terms confirmation'},
+    {id:6,title:'Review: PR #EX-218',source:'GitHub',detail:'Teammate C requested your review 6 hours ago'}
+  ],
+  sinking:[
+    {id:7,title:'"I\'ll send the notes"',source:'Zoom',detail:'Promised in meeting 19 days ago, still not sent'},
+    {id:8,title:'Follow up with Teammate C',source:'Slack',detail:'DM thread from 26 days ago, no response'},
+    {id:9,title:'Spike: caching',source:'GitHub',detail:'Draft PR created 14 days ago, abandoned'}
+  ],
+  ithaca:{progress:42,message:'The shores of Ithaca grow clearer: 3 of 7 Q4 objectives completed. Your ship holds true.'},
+  sirens:{count:8,message:'Beware the Sirens: 8 hours in meetings this week slowed your voyage toward the API migration.'},
+  gifts:[
+    {from:'Teammate A',msg:'🙌 Thanks for the quick review on the auth PR!',time:'2d ago'},
+    {from:'Teammate D',msg:'💯 Great catch on that flaky test',time:'4d ago'}
+  ]
+};
+
+function openCaptainsLog(){
+  document.getElementById('logModal').classList.add('on');
+  setTimeout(()=>document.getElementById('logModal').style.opacity='1',10);
+}
+
+function closeCaptainsLog(){
+  const m=document.getElementById('logModal');
+  m.style.opacity='0';
+  setTimeout(()=>m.classList.remove('on'),300);
+}
+
+function confirmIsland(id){
+  const c=document.querySelector(`.icard[data-id="${id}"]`);
+  c.classList.add('done');
+  c.querySelector('.act').innerHTML='<span style="color:#6f8f5a;font:600 13px Inter">✓ Confirmed</span>';
+}
+
+function editIsland(id){
+  document.querySelector(`.icard[data-id="${id}"] .edt`).classList.add('on');
+}
+
+function saveIslandEdit(id){
+  const c=document.querySelector(`.icard[data-id="${id}"]`);
+  const v=c.querySelector('.edt textarea').value;
+  if(v.trim()){
+    c.querySelector('.im').textContent=v;
+    c.classList.add('moved');
+    c.querySelector('.edt').classList.remove('on');
+    c.querySelector('.act').innerHTML='<span style="color:#6f8f5a;font:600 13px Inter">✓ Updated — map will reflect this</span>';
+  }
+}
+
+function addContext(id){
+  const c=document.querySelector(`.icard[data-id="${id}"]`);
+  c.querySelector('.edt').classList.add('on');
+  c.querySelector('.edt textarea').placeholder='Add context: why was this harder than it looks? what blockers did you face?';
+}
+
+// Three Trials data and functions
+const TRIALS_DATA=[
+  {
+    id:1,
+    monster:'The Cyclops',
+    type:'BLOCKER',
+    title:'Legacy auth system migration',
+    desc:'The old authentication fortress refused to yield. Single point of failure, no tests, three different session mechanisms tangled like Medusa\'s hair.',
+    helped:['Teammate A','Teammate C'],
+    backstory:'',
+    confirmed:false
+  },
+  {
+    id:2,
+    monster:'Poseidon\'s Storm',
+    type:'INCIDENT',
+    title:'Production API rate limit cascade',
+    desc:'At 2 AM Thursday, the API gateway began rejecting requests. Cascading failures across 4 services. 47 minutes to restore, angry customers in the tempest.',
+    helped:['Teammate D','Teammate B'],
+    backstory:'',
+    confirmed:false
+  },
+  {
+    id:3,
+    monster:'Scylla & Charybdis',
+    type:'TRADE-OFF',
+    title:'Performance vs. code clarity',
+    desc:'The query optimizer demanded sacrifices: either readable code the team could maintain, or lightning speed that none could decipher. You chose the strait between.',
+    helped:['Teammate A'],
+    backstory:'',
+    confirmed:false
+  }
+];
+
+let trialsEdited=false;
+
+function openThreeTrials(){
+  renderTrials();
+  document.getElementById('trialsModal').classList.add('on');
+  setTimeout(()=>document.getElementById('trialsModal').style.opacity='1',10);
+}
+
+function closeThreeTrials(){
+  const m=document.getElementById('trialsModal');
+  m.style.opacity='0';
+  setTimeout(()=>m.classList.remove('on'),300);
+}
+
+function confirmTrial(id){
+  const t=TRIALS_DATA.find(x=>x.id===id);
+  t.confirmed=true;
+  document.querySelector(`.trial[data-id="${id}"] .act`).innerHTML='<span style="color:#6f8f5a;font:600 14px Inter">✓ Confirmed</span>';
+  checkAllConfirmed();
+}
+
+function swapTrial(id){
+  const c=document.querySelector(`.trial[data-id="${id}"]`);
+  c.querySelector('.edt').classList.add('on');
+  c.querySelector('.edt textarea').placeholder='Describe a harder challenge you faced this month...';
+  c.querySelector('.edt input').placeholder='Who helped you overcome it?';
+}
+
+function saveTrial(id){
+  const c=document.querySelector(`.trial[data-id="${id}"]`);
+  const desc=c.querySelector('.edt textarea').value;
+  const crew=c.querySelector('.edt input').value;
+  if(desc.trim()){
+    const t=TRIALS_DATA.find(x=>x.id===id);
+    t.backstory=desc;
+    if(crew.trim())t.helped=crew.split(',').map(x=>x.trim());
+    t.confirmed=true;
+    c.querySelector('.desc').textContent=desc;
+    if(crew.trim()){
+      c.querySelector('.crew').innerHTML=t.helped.map(h=>`<span>${h}</span>`).join('');
+    }
+    c.querySelector('.edt').classList.remove('on');
+    c.querySelector('.act').innerHTML='<span style="color:#6f8f5a;font:600 14px Inter">✓ Saved</span>';
+    trialsEdited=true;
+    checkAllConfirmed();
+  }
+}
+
+function addTrialBackstory(id){
+  swapTrial(id);
+}
+
+function checkAllConfirmed(){
+  if(TRIALS_DATA.every(t=>t.confirmed)&&trialsEdited){
+    setTimeout(renderEpic,800);
+  }
+}
+
+function renderEpic(){
+  const epic=document.getElementById('epicChapter');
+  epic.innerHTML=`<h2 style="text-align:center;margin-bottom:20px">The Epic of October</h2>
+<div class="epic">
+In the waning days of October, <b>you faced three trials</b> that would test the limits of mortal resolve.
+
+First came <b>The Cyclops</b>, guardian of the legacy fortress. ${TRIALS_DATA[0].backstory||'The old authentication system, a single-eyed beast of tangled code, refused to yield. With Teammate A at your side, you forged new paths through the labyrinth.'} The beast now sleeps, and travelers pass safely through gates of your making.
+
+Then <b>Poseidon himself</b> sent storms upon your works. ${TRIALS_DATA[1].backstory||'At the darkest hour, the API gateway fell. Cascading failures threatened to drown all you had built. But with Teammate D as lighthouse keeper, you guided your ship through 47 minutes of tempest.'} The seas are calm once more, but you remember the taste of salt and fear.
+
+Finally, you sailed the strait between <b>Scylla and Charybdis</b>, where no choice is without sacrifice. ${TRIALS_DATA[2].backstory||'Performance demanded blood; clarity demanded time. You chose the narrow path, sacrificing neither entirely, gaining both in measure.'} Your code stands as testament: fast enough to serve, clear enough to teach.
+
+<b>These deeds are yours.</b> The voyage continues, but October's trials have made you stronger. Your crew — ${[...new Set(TRIALS_DATA.flatMap(t=>t.helped))].join(', ')} — sailed beside you. The Shipped Continent grows, and Ithaca draws nearer.
+</div>
+<div style="text-align:center;margin-top:20px;font:italic 15px 'IM Fell English';color:#7a2e1f">
+🔒 This chapter is private by default. Choose what to share with your manager.
+</div>`;
+  epic.style.display='block';
+  epic.scrollIntoView({behavior:'smooth'});
+}
+
+function renderTrials(){
+  const html=TRIALS_DATA.map(t=>`
+<div class="trial" data-id="${t.id}">
+  <div class="mon">${t.monster.split(' ')[1]||t.monster}</div>
+  <div class="typ">${t.type}</div>
+  <h3>${t.title}</h3>
+  <div class="desc">${t.desc}</div>
+  <div class="crew">${t.helped.map(h=>`<span>${h}</span>`).join('')}</div>
+  <div class="act">
+    <button class="ok" onclick="confirmTrial(${t.id})">✓ Confirm</button>
+    <button onclick="swapTrial(${t.id})">Swap for harder one</button>
+    <button onclick="addTrialBackstory(${t.id})">Add backstory</button>
+  </div>
+  <div class="edt">
+    <textarea placeholder="Why was this hard? What did you learn?"></textarea>
+    <input placeholder="Who helped? (comma-separated)"/>
+    <button onclick="saveTrial(${t.id})">Save</button>
+  </div>
+</div>
+  `).join('');
+  document.getElementById('trialsContent').innerHTML=html;
+}
 </script>
+
+<!-- Captain's Log Modal -->
+<div id="logModal" class="modal" onclick="if(event.target===this)closeCaptainsLog()">
+<div class="scroll">
+  <div class="mcls" onclick="closeCaptainsLog()">×</div>
+  <h1>Captain's Log</h1>
+  <div class="dr">Draft — you're the captain, correct what's wrong</div>
+  
+  <div class="ath">
+    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23d4a76a'/%3E%3Ctext x='50' y='68' font-family='serif' font-size='48' fill='%23fff' text-anchor='middle'%3EΑ%3C/text%3E%3C/svg%3E" alt="Athena"/>
+    <div class="msg">Hail, voyager. I am Athena, your guide through these waters. I've charted your week from the stars and tides. Review my account and make corrections — your word is truth, mine is but observation.</div>
+  </div>
+
+  <div class="sec">
+    <h2>⚓ Islands Reached (Completed)</h2>
+    ${LOG_DATA.completed.map(item=>`
+    <div class="icard" data-id="${item.id}">
+      <h3>${item.title}</h3>
+      <div class="im">${item.detail}</div>
+      <div class="act">
+        <button class="ok" onclick="confirmIsland(${item.id})">Aye, that's right</button>
+        <button onclick="editIsland(${item.id})">Not quite</button>
+        <button onclick="addContext(${item.id})">Missing context</button>
+      </div>
+      <div class="edt">
+        <textarea placeholder="Correct the details...">${item.detail}</textarea>
+        <button onclick="saveIslandEdit(${item.id})">Save correction</button>
+      </div>
+    </div>
+    `).join('')}
+  </div>
+
+  <div class="sec">
+    <h2>⛈️ Stormy Waters (Needs Attention)</h2>
+    ${LOG_DATA.stormy.map(item=>`
+    <div class="icard" data-id="${item.id}">
+      <h3>${item.title}</h3>
+      <div class="im">${item.detail}</div>
+      <div class="act">
+        <button class="ok" onclick="confirmIsland(${item.id})">Aye, that's right</button>
+        <button onclick="editIsland(${item.id})">Not quite</button>
+        <button onclick="addContext(${item.id})">Missing context</button>
+      </div>
+      <div class="edt">
+        <textarea placeholder="Correct the details...">${item.detail}</textarea>
+        <button onclick="saveIslandEdit(${item.id})">Save correction</button>
+      </div>
+    </div>
+    `).join('')}
+  </div>
+
+  <div class="sec">
+    <h2>🌊 Sinking Islands (Forgotten)</h2>
+    <div style="font:italic 14px 'IM Fell English';color:#7a6548;margin-bottom:12px">🔒 Private view — only you see these</div>
+    ${LOG_DATA.sinking.map(item=>`
+    <div class="icard" data-id="${item.id}">
+      <h3>${item.title}</h3>
+      <div class="im">${item.detail}</div>
+      <div class="act">
+        <button class="ok" onclick="confirmIsland(${item.id})">Aye, that's right</button>
+        <button onclick="editIsland(${item.id})">Not quite</button>
+        <button onclick="addContext(${item.id})">Missing context</button>
+      </div>
+      <div class="edt">
+        <textarea placeholder="Correct the details...">${item.detail}</textarea>
+        <button onclick="saveIslandEdit(${item.id})">Save correction</button>
+      </div>
+    </div>
+    `).join('')}
+  </div>
+
+  <div class="hrz">The Horizon</div>
+
+  <div class="ith">
+    <h3>🏛️ Ithaca Awaits (Q4 Objectives)</h3>
+    <div class="im">${LOG_DATA.ithaca.message}</div>
+    <div class="prog">
+      <div class="bar"><div style="width:${LOG_DATA.ithaca.progress}%"></div></div>
+      ${LOG_DATA.ithaca.progress}% toward home
+    </div>
+  </div>
+
+  <div class="ith">
+    <h3>🎵 The Sirens</h3>
+    <div class="im">${LOG_DATA.sirens.message}</div>
+  </div>
+
+  <div class="sec">
+    <h2>🎁 Crew Gifts (Kudos)</h2>
+    ${LOG_DATA.gifts.map(g=>`
+    <div class="gift">
+      <div class="av">${g.from.slice(-1)}</div>
+      <div class="txt"><b>${g.from}:</b> ${g.msg} <em style="color:#8a6a3f;font-size:14px">${g.time}</em></div>
+    </div>
+    `).join('')}
+  </div>
+
+  <div style="text-align:center;margin-top:32px;padding:20px;background:#fff8e8;border:2px dashed #c9b48a;border-radius:8px">
+    <div style="font:20px Caveat;color:#4a3520;margin-bottom:8px">Your corrections teach me. The map learns from your truth.</div>
+    <div style="font:italic 13px 'IM Fell English';color:#7a6548">These edits improve the AI's understanding of your work</div>
+  </div>
+</div>
+</div>
+
+<!-- Three Trials Modal -->
+<div id="trialsModal" class="modal" onclick="if(event.target===this)closeThreeTrials()">
+<div class="scroll">
+  <div class="mcls" onclick="closeThreeTrials()">×</div>
+  <h1>The Three Trials of October</h1>
+  <div class="dr">Draft — confirm, swap, or add your story</div>
+  
+  <div class="ath">
+    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='50' fill='%23d4a76a'/%3E%3Ctext x='50' y='68' font-family='serif' font-size='48' fill='%23fff' text-anchor='middle'%3EΑ%3C/text%3E%3C/svg%3E" alt="Athena"/>
+    <div class="msg">Every month is an epic chapter. I've identified the three hardest problems you faced this October — each cast as a monster from the old tales. Confirm my choices, swap one for a harder trial, or add the story behind each victory.</div>
+  </div>
+
+  <div id="trialsContent"></div>
+
+  <div id="epicChapter" style="display:none;margin-top:32px"></div>
+
+  <div style="text-align:center;margin-top:32px;padding:20px;background:#fff8e8;border:2px dashed #c9b48a;border-radius:8px">
+    <div style="font:20px Caveat;color:#4a3520;margin-bottom:8px">Your story makes the data human. I learn what "hard" means to you.</div>
+    <div style="font:italic 13px 'IM Fell English';color:#7a6548">These narratives help the AI understand context, not just metrics</div>
+  </div>
+</div>
+</div>
+
 </body></html>
