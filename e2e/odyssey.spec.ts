@@ -268,6 +268,8 @@ test.describe('The Work Odyssey', () => {
   });
 
   test('should take screenshots of all views', async ({ page }, testInfo) => {
+    test.setTimeout(90000); // 90 seconds for 12 views
+    
     // Set viewport to 1440x900 for consistent screenshots
     await page.setViewportSize({ width: 1440, height: 900 });
     
@@ -303,6 +305,9 @@ test.describe('The Work Odyssey', () => {
       
       // Wait for page to be stable
       await page.waitForLoadState('networkidle');
+      
+      // Wait for animations to complete (most views have Framer Motion delays)
+      await page.waitForTimeout(1500);
       
       // Take screenshot
       await page.screenshot({ 
