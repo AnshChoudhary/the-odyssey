@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { mockUserProfile, getCrewMemberById } from '../data/mockData';
 import type { Trial } from '../types';
+import { CartographicBackground } from './CartographicBackground';
 
 export function ThreeTrials() {
   const [trials, setTrials] = useState(mockUserProfile.trials);
@@ -11,11 +12,31 @@ export function ThreeTrials() {
 
   const selectedTrialData = trials.find(t => t.id === selectedTrial);
 
-  const getMonsterImage = (monster: Trial['monster']) => {
+  const getMonsterIllustration = (monster: Trial['monster']) => {
     switch (monster) {
-      case 'cyclops': return '👁️';
-      case 'poseidon': return '🔱';
-      case 'scylla-charybdis': return '🌪️';
+      case 'cyclops': return (
+        <svg width="100" height="100" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="35" fill="#7a6d5e" stroke="#3f3320" strokeWidth="2" />
+          <circle cx="50" cy="45" r="15" fill="#f4efe6" stroke="#3f3320" strokeWidth="2" />
+          <circle cx="50" cy="45" r="8" fill="#2d2419" />
+        </svg>
+      );
+      case 'poseidon': return (
+        <svg width="100" height="100" viewBox="0 0 100 100">
+          <path d="M 50,20 L 45,50 L 50,80 L 55,50 Z" fill="#6b8e9d" stroke="#3f3320" strokeWidth="2" />
+          <path d="M 30,30 L 50,50 L 70,30" fill="none" stroke="#3f3320" strokeWidth="3" />
+          <circle cx="40" cy="35" r="3" fill="#4db8cc" />
+          <circle cx="60" cy="35" r="3" fill="#4db8cc" />
+        </svg>
+      );
+      case 'scylla-charybdis': return (
+        <svg width="100" height="100" viewBox="0 0 100 100">
+          <path d="M 30,50 Q 30,30 50,30 Q 70,30 70,50 Q 70,70 50,70 Q 30,70 30,50" fill="#8b7355" stroke="#3f3320" strokeWidth="2" />
+          <circle cx="40" cy="45" r="4" fill="#2d2419" />
+          <circle cx="60" cy="45" r="4" fill="#2d2419" />
+          <path d="M 35,60 Q 50,65 65,60" fill="none" stroke="#3f3320" strokeWidth="2" />
+        </svg>
+      );
     }
   };
 
@@ -27,14 +48,6 @@ export function ThreeTrials() {
     }
   };
 
-  const getMonsterDescription = (monster: Trial['monster']) => {
-    switch (monster) {
-      case 'cyclops': return 'A singular, massive challenge requiring focused strength';
-      case 'poseidon': return 'Forces beyond your control creating chaos';
-      case 'scylla-charybdis': return 'Two terrible choices with no clear right answer';
-    }
-  };
-
   const handleConfirmTrial = (trialId: string) => {
     setTrials(trials.map(t => 
       t.id === trialId ? { ...t, confirmed: true } : t
@@ -42,7 +55,6 @@ export function ThreeTrials() {
   };
 
   const handleSwapTrial = (trialId: string) => {
-    // In a real app, this would open a dialog to select a different challenge
     console.log('Swap trial:', trialId);
   };
 
@@ -63,109 +75,87 @@ export function ThreeTrials() {
   const allConfirmed = trials.every(t => t.confirmed);
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-gradient-to-br from-ink-900 via-ocean-900 to-ink-800">
-      {/* View title */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="absolute top-24 left-1/2 transform -translate-x-1/2 z-30 glass-panel px-6 py-3"
-      >
-        <p className="text-sm text-ink-900 text-center">
-          Three Trials — identify your month's biggest challenges as epic monsters
-        </p>
-      </motion.div>
-
-      {/* Trials Grid */}
-      <div className="absolute top-48 left-1/2 transform -translate-x-1/2 w-full max-w-6xl px-8">
-        <motion.h2
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="font-display text-4xl font-bold text-parchment-100 text-center mb-12"
-        >
-          The Three Trials of {trials[0]?.month}
-        </motion.h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {trials.map((trial, index) => (
-            <motion.div
-              key={trial.id}
-              data-testid={`trial-${trial.id}`}
-              role="button"
-              aria-label={`View details for ${trial.title}`}
-              tabIndex={0}
-              initial={{ opacity: 0, y: 50, rotateX: -20 }}
-              animate={{ opacity: 1, y: 0, rotateX: 0 }}
-              transition={{ delay: index * 0.2 }}
-              className="glass-panel p-6 cursor-pointer hover:scale-105 transition-transform"
-              onClick={() => setSelectedTrial(trial.id)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  setSelectedTrial(trial.id);
-                }
-              }}
-            >
-              {/* Monster icon */}
-              <div className="text-6xl text-center mb-4 filter drop-shadow-lg">
-                {getMonsterImage(trial.monster)}
-              </div>
-
-              {/* Trial info */}
-              <h3 className="font-display text-xl font-bold text-ink-900 text-center mb-2">
-                {trial.title}
-              </h3>
-              <p className="text-sm text-ink-700 text-center mb-4">
-                {getMonsterName(trial.monster)}
-              </p>
-              <p className="text-sm text-ink-900 text-center mb-4">
-                {trial.description}
-              </p>
-
-              {/* Status indicator */}
-              <div className="flex items-center justify-center gap-2">
-                {trial.confirmed ? (
-                  <span className="text-xs px-3 py-1 bg-ocean-700 text-parchment-50 rounded-full">
-                    ⚓ Confirmed
-                  </span>
-                ) : (
-                  <span className="text-xs px-3 py-1 bg-parchment-200 text-ink-900 rounded-full">
-                    Review needed
-                  </span>
-                )}
-              </div>
-
-              {/* Crew tags */}
-              {trial.involvedCrew.length > 0 && (
-                <div className="mt-4 flex justify-center gap-2">
-                  {trial.involvedCrew.slice(0, 3).map(crewId => {
-                    const member = getCrewMemberById(crewId);
-                    return member ? (
-                      <span key={crewId} className="text-xl" title={member.name}>
-                        {member.avatar}
-                      </span>
-                    ) : null;
-                  })}
+    <CartographicBackground title={`The Three Trials of ${trials[0]?.month}`} subtitle="Epic monsters representing your greatest challenges">
+      <div className="relative w-full h-full pt-32 px-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+            {trials.map((trial, index) => (
+              <motion.div
+                key={trial.id}
+                data-testid={`trial-${trial.id}`}
+                role="button"
+                aria-label={`View details for ${trial.title}`}
+                tabIndex={0}
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.15 }}
+                className="bg-[#f4efe6] p-6 rounded border-2 border-[#8b7355] cursor-pointer hover:shadow-xl transition-all"
+                onClick={() => setSelectedTrial(trial.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setSelectedTrial(trial.id);
+                  }
+                }}
+              >
+                {/* Monster illustration */}
+                <div className="flex justify-center mb-4">
+                  {getMonsterIllustration(trial.monster)}
                 </div>
-              )}
-            </motion.div>
-          ))}
-        </div>
 
-        {/* Complete button */}
-        {allConfirmed && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="mt-12 text-center"
-          >
-            <button className="btn-primary text-lg px-12 py-4">
-              Generate This Month's Chapter ⚓
-            </button>
-            <p className="text-parchment-200 text-sm mt-4">
-              Your trials will be woven into an epic tale
-            </p>
-          </motion.div>
-        )}
+                <h3 className="font-display text-xl font-bold text-[#2d2419] text-center mb-2">
+                  {trial.title}
+                </h3>
+                <p className="text-sm text-[#5a4a3a] text-center mb-3 font-serif italic">
+                  {getMonsterName(trial.monster)}
+                </p>
+                <p className="text-sm text-[#3f3320] text-center mb-4 font-serif">
+                  {trial.description}
+                </p>
+
+                <div className="flex items-center justify-center gap-2">
+                  {trial.confirmed ? (
+                    <span className="text-xs px-3 py-1 bg-[#6b8e9d] text-[#f4efe6] rounded-full font-serif">
+                      ⚓ Confirmed
+                    </span>
+                  ) : (
+                    <span className="text-xs px-3 py-1 bg-[#e8dcc7] text-[#2d2419] rounded-full border border-[#8b7355]/30 font-serif">
+                      Review needed
+                    </span>
+                  )}
+                </div>
+
+                {trial.involvedCrew.length > 0 && (
+                  <div className="mt-4 flex justify-center gap-2">
+                    {trial.involvedCrew.slice(0, 3).map(crewId => {
+                      const member = getCrewMemberById(crewId);
+                      return member ? (
+                        <span key={crewId} className="text-2xl" title={member.name}>
+                          {member.avatar}
+                        </span>
+                      ) : null;
+                    })}
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </div>
+
+          {allConfirmed && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center"
+            >
+              <button className="px-12 py-4 bg-[#6b8e9d] text-[#f4efe6] rounded text-lg font-medium hover:bg-[#5a7d8c] transition-all font-serif shadow-lg">
+                Generate This Month's Chapter ⚓
+              </button>
+              <p className="text-[#5a4a3a] text-sm mt-4 font-serif italic">
+                Your trials will be woven into an epic tale
+              </p>
+            </motion.div>
+          )}
+        </div>
       </div>
 
       {/* Trial Detail Panel */}
@@ -176,7 +166,7 @@ export function ThreeTrials() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-ink-900 bg-opacity-70 z-40 backdrop-blur-sm"
+              className="fixed inset-0 bg-[#2d2419] bg-opacity-70 z-40 backdrop-blur-sm"
               onClick={() => setSelectedTrial(null)}
             />
             <motion.div
@@ -184,53 +174,42 @@ export function ThreeTrials() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: 'spring', damping: 25 }}
-              className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl glass-panel p-8 z-50 max-h-[80vh] overflow-y-auto"
+              className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-[#f4efe6] p-8 z-50 max-h-[80vh] overflow-y-auto rounded border-2 border-[#8b7355] shadow-2xl"
             >
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <div className="text-5xl mb-4">{getMonsterImage(selectedTrialData.monster)}</div>
-                  <h2 className="font-display text-3xl font-bold text-ink-900 mb-2">
+                  <div className="mb-4">{getMonsterIllustration(selectedTrialData.monster)}</div>
+                  <h2 className="font-display text-3xl font-bold text-[#2d2419] mb-2">
                     {selectedTrialData.title}
                   </h2>
-                  <p className="text-ink-700">{getMonsterName(selectedTrialData.monster)}</p>
+                  <p className="text-[#5a4a3a] font-serif italic">{getMonsterName(selectedTrialData.monster)}</p>
                 </div>
                 <button
                   onClick={() => setSelectedTrial(null)}
-                  className="text-ink-700 hover:text-ink-900 text-2xl"
+                  className="text-[#5a4a3a] hover:text-[#2d2419] text-2xl"
                 >
                   ×
                 </button>
               </div>
 
-              <div className="bg-parchment-100 p-4 rounded-lg mb-6">
-                <p className="text-sm text-ink-700 italic">
-                  {getMonsterDescription(selectedTrialData.monster)}
-                </p>
-              </div>
+              <p className="text-[#2d2419] mb-6 font-serif">{selectedTrialData.description}</p>
 
-              <p className="text-ink-900 mb-6">{selectedTrialData.description}</p>
-
-              {/* Backstory */}
               <div className="mb-6">
-                <label className="block font-semibold text-ink-900 mb-2">
+                <label className="block font-display font-semibold text-[#2d2419] mb-2">
                   Add backstory (optional)
                 </label>
-                <p className="text-xs text-ink-700 mb-2">
-                  What led to this challenge? This helps generate a richer chapter.
-                </p>
                 <textarea
                   value={backstories[selectedTrialData.id] || selectedTrialData.backstory || ''}
                   onChange={(e) => setBackstories(prev => ({ ...prev, [selectedTrialData.id]: e.target.value }))}
                   onBlur={(e) => handleAddBackstory(selectedTrialData.id, e.target.value)}
-                  className="w-full px-3 py-2 border border-ink-700 border-opacity-20 rounded-lg focus:outline-none focus:ring-2 focus:ring-ocean-500 bg-parchment-50"
+                  className="w-full px-3 py-2 border-2 border-[#8b7355]/30 rounded focus:outline-none focus:border-[#6b8e9d] bg-[#f4efe6] font-serif"
                   rows={4}
                   placeholder="Describe how this challenge emerged..."
                 />
               </div>
 
-              {/* Tag crew */}
               <div className="mb-6">
-                <label className="block font-semibold text-ink-900 mb-2">
+                <label className="block font-display font-semibold text-[#2d2419] mb-2">
                   Tag crew members involved
                 </label>
                 <div className="grid grid-cols-2 gap-2">
@@ -244,10 +223,10 @@ export function ThreeTrials() {
                           : [...current, member.id];
                         handleTagCrew(selectedTrialData.id, newSelection);
                       }}
-                      className={`flex items-center gap-2 p-2 rounded-lg border transition-all ${
+                      className={`flex items-center gap-2 p-2 rounded border-2 transition-all font-serif ${
                         (selectedCrew[selectedTrialData.id] || selectedTrialData.involvedCrew).includes(member.id)
-                          ? 'bg-ocean-700 text-parchment-50 border-ocean-700'
-                          : 'bg-parchment-100 text-ink-900 border-ink-700 border-opacity-20'
+                          ? 'bg-[#6b8e9d] text-[#f4efe6] border-[#6b8e9d]'
+                          : 'bg-[#e8dcc7] text-[#2d2419] border-[#8b7355]/30'
                       }`}
                     >
                       <span className="text-xl">{member.avatar}</span>
@@ -257,7 +236,6 @@ export function ThreeTrials() {
                 </div>
               </div>
 
-              {/* Actions */}
               <div className="flex gap-3">
                 {!selectedTrialData.confirmed ? (
                   <>
@@ -267,7 +245,7 @@ export function ThreeTrials() {
                         handleConfirmTrial(selectedTrialData.id);
                         setSelectedTrial(null);
                       }}
-                      className="btn-primary flex-1"
+                      className="flex-1 px-6 py-3 bg-[#6b8e9d] text-[#f4efe6] rounded font-medium hover:bg-[#5a7d8c] transition-all font-serif"
                       aria-label="Confirm this trial"
                     >
                       ⚓ Confirm This Trial
@@ -275,17 +253,17 @@ export function ThreeTrials() {
                     <button
                       data-testid="btn-swap-trial"
                       onClick={() => handleSwapTrial(selectedTrialData.id)}
-                      className="btn-secondary flex-1"
+                      className="flex-1 px-6 py-3 bg-[#e8dcc7] text-[#2d2419] rounded font-medium hover:bg-[#d4c9b3] transition-all border-2 border-[#8b7355]/30 font-serif"
                       aria-label="Swap for a different challenge"
                     >
-                      Swap for Different Challenge
+                      Swap Challenge
                     </button>
                   </>
                 ) : (
                   <button
                     data-testid="btn-close-trial"
                     onClick={() => setSelectedTrial(null)}
-                    className="btn-primary w-full"
+                    className="w-full px-6 py-3 bg-[#6b8e9d] text-[#f4efe6] rounded font-medium hover:bg-[#5a7d8c] transition-all font-serif"
                     aria-label="Close trial details"
                   >
                     Close
@@ -296,22 +274,6 @@ export function ThreeTrials() {
           </>
         )}
       </AnimatePresence>
-
-      {/* Background storm effects */}
-      <motion.div
-        animate={{
-          opacity: [0.1, 0.3, 0.1],
-        }}
-        transition={{
-          duration: 4,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: 'radial-gradient(circle at 50% 50%, rgba(77, 184, 204, 0.2) 0%, transparent 70%)',
-        }}
-      />
-    </div>
+    </CartographicBackground>
   );
 }

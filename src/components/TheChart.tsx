@@ -7,7 +7,6 @@ import {
   generateShorelineRings,
   generateCloudPath,
   findNonOverlappingPosition,
-  generateSeaHatching,
   type Box,
 } from '../utils/islandGenerator';
 
