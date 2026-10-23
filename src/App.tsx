@@ -9,7 +9,7 @@ import { Ithaca } from './components/Ithaca';
 import { Chapters } from './components/Chapters';
 import { CalypsoIsland } from './components/CalypsoIsland';
 import { Gifts } from './components/Gifts';
-import { RecruitCrew, Ports, Armada, Athena } from './components/SimpleViews';
+import { RecruitCrew, PortsOfCall, TheArmada, AthenasCounsel } from './components/SimpleViews';
 
 function App() {
   const [currentView, setCurrentView] = useState<ViewName>('chart');
@@ -65,11 +65,11 @@ function App() {
       case 'recruit':
         return <RecruitCrew />;
       case 'ports':
-        return <Ports />;
+        return <PortsOfCall />;
       case 'armada':
-        return <Armada />;
+        return <TheArmada />;
       case 'athena':
-        return <Athena />;
+        return <AthenasCounsel />;
       default:
         return <TheChart onNavigateToShip={() => handleNavigate('ship')} />;
     }
