@@ -89,11 +89,21 @@ export function ThreeTrials() {
           {trials.map((trial, index) => (
             <motion.div
               key={trial.id}
+              data-testid={`trial-${trial.id}`}
+              role="button"
+              aria-label={`View details for ${trial.title}`}
+              tabIndex={0}
               initial={{ opacity: 0, y: 50, rotateX: -20 }}
               animate={{ opacity: 1, y: 0, rotateX: 0 }}
               transition={{ delay: index * 0.2 }}
               className="glass-panel p-6 cursor-pointer hover:scale-105 transition-transform"
               onClick={() => setSelectedTrial(trial.id)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setSelectedTrial(trial.id);
+                }
+              }}
             >
               {/* Monster icon */}
               <div className="text-6xl text-center mb-4 filter drop-shadow-lg">
@@ -252,25 +262,31 @@ export function ThreeTrials() {
                 {!selectedTrialData.confirmed ? (
                   <>
                     <button
+                      data-testid="btn-confirm-trial"
                       onClick={() => {
                         handleConfirmTrial(selectedTrialData.id);
                         setSelectedTrial(null);
                       }}
                       className="btn-primary flex-1"
+                      aria-label="Confirm this trial"
                     >
                       ⚓ Confirm This Trial
                     </button>
                     <button
+                      data-testid="btn-swap-trial"
                       onClick={() => handleSwapTrial(selectedTrialData.id)}
                       className="btn-secondary flex-1"
+                      aria-label="Swap for a different challenge"
                     >
                       Swap for Different Challenge
                     </button>
                   </>
                 ) : (
                   <button
+                    data-testid="btn-close-trial"
                     onClick={() => setSelectedTrial(null)}
                     className="btn-primary w-full"
+                    aria-label="Close trial details"
                   >
                     Close
                   </button>

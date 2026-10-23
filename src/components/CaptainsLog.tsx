@@ -182,17 +182,21 @@ export function CaptainsLog() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="absolute bottom-32 left-1/2 transform -translate-x-1/2 flex gap-4"
+          className="absolute bottom-32 left-1/2 transform -translate-x-1/2 flex gap-4 z-50"
         >
           <button
+            data-testid="btn-not-quite"
             onClick={() => handleSwipe('left')}
             className="px-8 py-3 bg-parchment-200 text-ink-900 rounded-lg font-medium hover:bg-parchment-300 transition-all duration-200 border border-ink-700 border-opacity-20 focus:outline-none focus:ring-2 focus:ring-ocean-500"
+            aria-label="Mark as not quite accurate"
           >
             Not quite
           </button>
           <button
+            data-testid="btn-aye"
             onClick={() => handleSwipe('right')}
             className="px-8 py-3 bg-ocean-700 text-parchment-50 rounded-lg font-medium hover:bg-ocean-600 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ocean-500 focus:ring-offset-2"
+            aria-label="Confirm as accurate"
           >
             Aye ⚓
           </button>
@@ -232,23 +236,11 @@ export function CaptainsLog() {
       )}
 
       {/* Background waves */}
-      <svg className="absolute bottom-0 left-0 right-0 opacity-20" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
-        <motion.path
+      <svg className="absolute bottom-0 left-0 right-0 opacity-20 pointer-events-none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 320">
+        <path
           fill="#f9f6ed"
           fillOpacity="1"
           d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,149.3C960,160,1056,160,1152,138.7C1248,117,1344,75,1392,53.3L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
-          animate={{
-            d: [
-              "M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,149.3C960,160,1056,160,1152,138.7C1248,117,1344,75,1392,53.3L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z",
-              "M0,128L48,138.7C96,149,192,171,288,165.3C384,160,480,128,576,128C672,128,768,160,864,176C960,192,1056,192,1152,170.7C1248,149,1344,107,1392,85.3L1440,64L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z",
-              "M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,149.3C960,160,1056,160,1152,138.7C1248,117,1344,75,1392,53.3L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z",
-            ],
-          }}
-          transition={{
-            repeat: Infinity,
-            duration: 8,
-            ease: 'easeInOut',
-          }}
         />
       </svg>
     </div>

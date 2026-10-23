@@ -2,11 +2,21 @@ import { test, expect } from '@playwright/test';
 
 test.describe('The Work Odyssey', () => {
   test.beforeEach(async ({ page }) => {
+    // Listen for console errors
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') {
+        console.error('Console error:', msg.text());
+      }
+    });
+
     await page.goto('/');
+    
     // Skip tour if it appears
     const skipButton = page.getByRole('button', { name: /begin your voyage/i });
-    if (await skipButton.isVisible({ timeout: 1000 }).catch(() => false)) {
-      await skipButton.click();
+    try {
+      await skipButton.click({ timeout: 2000 });
+    } catch {
+      // Tour already dismissed or not present
     }
   });
 
@@ -20,8 +30,8 @@ test.describe('The Work Odyssey', () => {
 
     await page.waitForLoadState('networkidle');
     
-    // Check that The Chart is visible
-    await expect(page.locator('text=Your living map of work')).toBeVisible();
+    // Check that The Chart is visible (use more specific selector)
+    await expect(page.locator('.glass-panel').filter({ hasText: 'Your living map of work' }).first()).toBeVisible();
     
     // No console errors
     expect(errors).toHaveLength(0);
@@ -61,7 +71,7 @@ test.describe('The Work Odyssey', () => {
     const views = [
       { name: 'Board the Ship', expectedText: 'Your crew' },
       { name: "Captain's Log", expectedText: 'Weekly check-in with Athena' },
-      { name: 'Three Trials', expectedText: "Three Trials" },
+      { name: 'Three Trials', expectedText: 'biggest challenges' },
       { name: 'Ithaca North Star', expectedText: 'Your destination' },
       { name: 'Chapters of the Epic', expectedText: 'Your journey told as mock-epic prose' },
       { name: "Calypso's Island", expectedText: "Work that's been forgotten" },
@@ -76,11 +86,17 @@ test.describe('The Work Odyssey', () => {
       // Open navigation
       await page.getByRole('button', { name: /open navigation/i }).click();
       
+      // Wait for navigation to be visible
+      await expect(page.getByRole('heading', { name: /navigate/i })).toBeVisible();
+      
       // Click view
       await page.getByRole('button', { name: view.name }).click();
       
+      // Wait for navigation to close
+      await expect(page.getByRole('heading', { name: /navigate/i })).not.toBeVisible();
+      
       // Check that view is loaded
-      await expect(page.locator(`text=${view.expectedText}`)).toBeVisible({ timeout: 5000 });
+      await expect(page.locator(`text=${view.expectedText}`)).toBeVisible();
     }
   });
 
@@ -113,10 +129,10 @@ test.describe('The Work Odyssey', () => {
 
   test('should interact with map - pan and zoom', async ({ page }) => {
     // Wait for SVG to be visible
-    await page.locator('svg').first().waitFor({ state: 'visible' });
+    const svg = page.locator('svg').first();
+    await expect(svg).toBeVisible();
     
     // Try to pan by dragging
-    const svg = page.locator('svg').first();
     const box = await svg.boundingBox();
     if (box) {
       await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
@@ -125,42 +141,43 @@ test.describe('The Work Odyssey', () => {
       await page.mouse.up();
     }
     
-    // No errors should occur
+    // Test passed if no errors occurred
     expect(true).toBe(true);
   });
 
   test('should click island and show detail panel', async ({ page }) => {
-    // Wait for islands to load
-    await page.waitForTimeout(1000);
+    // Wait for first island to be present
+    const island = page.locator('[data-testid^="island-"]').first();
+    await expect(island).toBeVisible();
     
-    // Click an island (look for text elements in SVG)
-    const island = page.locator('g.island').first();
-    if (await island.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await island.click();
-      
-      // Detail panel should appear
-      await expect(page.locator('text=Actions')).toBeVisible({ timeout: 3000 });
-      
-      // Close panel
-      await page.locator('button:has-text("×")').first().click();
-      
-      // Panel should be hidden
-      await expect(page.locator('text=Actions')).not.toBeVisible();
-    }
+    // Click the island
+    await island.click();
+    
+    // Detail panel should appear with Actions heading
+    await expect(page.locator('text=Actions')).toBeVisible();
+    
+    // Verify action buttons are present
+    await expect(page.getByTestId('action-rescue')).toBeVisible();
+    await expect(page.getByTestId('action-done')).toBeVisible();
+    await expect(page.getByTestId('action-dismiss')).toBeVisible();
+    
+    // Close panel
+    await page.locator('button:has-text("×")').first().click();
+    
+    // Panel should be hidden
+    await expect(page.locator('text=Actions')).not.toBeVisible();
   });
 
   test('should click ship and navigate to Board the Ship', async ({ page }) => {
     // Wait for ship to be visible
-    await page.waitForTimeout(1000);
+    const ship = page.getByTestId('ship');
+    await expect(ship).toBeVisible();
     
     // Click the ship
-    const ship = page.locator('g.ship');
-    if (await ship.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await ship.click();
-      
-      // Should navigate to Board the Ship
-      await expect(page.locator('text=Your crew')).toBeVisible({ timeout: 3000 });
-    }
+    await ship.click();
+    
+    // Should navigate to Board the Ship
+    await expect(page.locator('text=Your crew')).toBeVisible();
   });
 
   test('should interact with crew member on ship deck', async ({ page }) => {
@@ -169,17 +186,21 @@ test.describe('The Work Odyssey', () => {
     await page.getByRole('button', { name: 'Board the Ship' }).click();
     await expect(page.locator('text=Your crew')).toBeVisible();
     
-    // Wait for crew to load
-    await page.waitForTimeout(1000);
+    // Wait for first crew member to be visible
+    const crewMember = page.locator('[data-testid^="crew-"]').first();
+    await expect(crewMember).toBeVisible();
     
-    // Click a crew member (look for avatars)
-    const crewMember = page.locator('.group').first();
-    if (await crewMember.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await crewMember.click();
-      
-      // Detail panel should appear with bond strength
-      await expect(page.locator('text=Bond Strength')).toBeVisible({ timeout: 3000 });
-    }
+    // Click crew member
+    await crewMember.click();
+    
+    // Detail panel should appear with bond strength
+    await expect(page.locator('text=Bond Strength')).toBeVisible();
+    
+    // Close panel
+    await page.locator('button:has-text("×")').first().click();
+    
+    // Panel should be hidden
+    await expect(page.locator('text=Bond Strength')).not.toBeVisible();
   });
 
   test("should swipe cards in Captain's Log", async ({ page }) => {
@@ -188,36 +209,45 @@ test.describe('The Work Odyssey', () => {
     await page.getByRole('button', { name: "Captain's Log" }).click();
     await expect(page.locator('text=Weekly check-in with Athena')).toBeVisible();
     
-    // Wait for cards to load
-    await page.waitForTimeout(1000);
+    // Wait for Aye button to be visible
+    const ayeButton = page.getByTestId('btn-aye');
+    await expect(ayeButton).toBeVisible();
     
     // Click Aye button
-    const ayeButton = page.getByRole('button', { name: /aye/i });
-    if (await ayeButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await ayeButton.click();
-      
-      // Progress should update
-      await page.waitForTimeout(500);
-    }
+    await ayeButton.click();
+    
+    // Wait for either progress to update or completion screen
+    await expect(
+      page.locator('text=/2\\/|Check-in Complete/')
+    ).toBeVisible({ timeout: 10000 });
   });
 
   test('should interact with Three Trials', async ({ page }) => {
     // Navigate to Three Trials
     await page.getByRole('button', { name: /open navigation/i }).click();
     await page.getByRole('button', { name: 'Three Trials' }).click();
-    await expect(page.locator('text=Three Trials')).toBeVisible();
+    await expect(page.locator('text=/identify your month.*biggest challenges/i')).toBeVisible();
     
-    // Wait for trials to load
-    await page.waitForTimeout(1000);
+    // Wait for first trial to be visible
+    const trial = page.locator('[data-testid^="trial-"]').first();
+    await expect(trial).toBeVisible();
     
-    // Click a trial
-    const trial = page.locator('.glass-panel').first();
-    if (await trial.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await trial.click();
-      
-      // Detail modal should appear
-      await expect(page.locator('text=Add backstory')).toBeVisible({ timeout: 3000 });
-    }
+    // Click trial
+    await trial.click();
+    
+    // Detail modal should appear
+    await expect(page.locator('text=Add backstory')).toBeVisible();
+    
+    // Verify confirm button is present (or close button if already confirmed)
+    const confirmButton = page.getByTestId('btn-confirm-trial');
+    const closeButton = page.getByTestId('btn-close-trial');
+    await expect(confirmButton.or(closeButton)).toBeVisible();
+    
+    // Close modal
+    await page.locator('button:has-text("×")').first().click();
+    
+    // Modal should be hidden
+    await expect(page.locator('text=Add backstory')).not.toBeVisible();
   });
 
   test('should open a gift chest', async ({ page }) => {
@@ -226,17 +256,15 @@ test.describe('The Work Odyssey', () => {
     await page.getByRole('button', { name: 'Gifts from the Gods' }).click();
     await expect(page.locator('text=Recognition from your crew')).toBeVisible();
     
-    // Wait for gifts to load
-    await page.waitForTimeout(1000);
+    // Wait for first unopened chest button to be visible
+    const openButton = page.locator('[data-testid^="btn-open-chest-"]').first();
+    await expect(openButton).toBeVisible();
     
-    // Click Open Chest button
-    const openButton = page.getByRole('button', { name: /open chest/i }).first();
-    if (await openButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await openButton.click();
-      
-      // Gift message should appear
-      await page.waitForTimeout(500);
-    }
+    // Click to open chest
+    await openButton.click();
+    
+    // Gift message should appear (star emoji indicates opened)
+    await expect(page.locator('text=⭐').first()).toBeVisible();
   });
 
   test('should take screenshots of all views', async ({ page }, testInfo) => {
@@ -260,13 +288,21 @@ test.describe('The Work Odyssey', () => {
 
     for (const view of views) {
       if (view.name !== 'chart') {
-        // Open navigation and click view
+        // Open navigation
         await page.getByRole('button', { name: /open navigation/i }).click();
+        
+        // Wait for navigation to be visible
+        await expect(page.getByRole('heading', { name: /navigate/i })).toBeVisible();
+        
+        // Click view
         await page.getByRole('button', { name: view.nav }).click();
+        
+        // Wait for navigation to close
+        await expect(page.getByRole('heading', { name: /navigate/i })).not.toBeVisible();
       }
       
-      // Wait for view to load
-      await page.waitForTimeout(1000);
+      // Wait for page to be stable
+      await page.waitForLoadState('networkidle');
       
       // Take screenshot
       await page.screenshot({ 

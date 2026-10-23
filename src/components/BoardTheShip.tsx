@@ -92,6 +92,10 @@ export function BoardTheShip() {
           {crew.map((member, index) => (
             <motion.div
               key={member.id}
+              data-testid={`crew-${member.id}`}
+              role="button"
+              aria-label={`View details for ${member.name}, ${getRoleName(member.role)}`}
+              tabIndex={0}
               initial={{ scale: 0, rotate: -180 }}
               animate={{ scale: 1, rotate: 0 }}
               transition={{ delay: index * 0.15, type: 'spring', damping: 12 }}
@@ -103,6 +107,12 @@ export function BoardTheShip() {
               }}
               className="cursor-pointer group"
               onClick={() => setSelectedCrew(member.id)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setSelectedCrew(member.id);
+                }
+              }}
             >
               {/* Action indicator */}
               <motion.div

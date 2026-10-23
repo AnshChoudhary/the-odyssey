@@ -165,7 +165,7 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
             const isStormyWater = item.status === 'needs-attention';
 
             return (
-              <g key={item.id} className="pointer-events-auto">
+              <g key={item.id} data-testid={`island-${item.id}`}>
                 {/* Stormy water around urgent items */}
                 {isStormyWater && (
                   <circle
@@ -174,15 +174,37 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
                     r={size + 20}
                     fill="rgba(224, 122, 95, 0.2)"
                     filter="url(#turbulence)"
+                    style={{ pointerEvents: 'none' }}
                   />
                 )}
 
-                {/* The island */}
+                {/* The island - clickable group */}
                 <g
+                  role="button"
+                  aria-label={`View details for ${item.title}`}
+                  tabIndex={0}
                   className="island cursor-pointer"
-                  onClick={() => setSelectedIsland(item.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedIsland(item.id);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedIsland(item.id);
+                    }
+                  }}
                   style={{ pointerEvents: 'auto' }}
                 >
+                  {/* Larger invisible hit area */}
+                  <circle
+                    cx={item.position.x}
+                    cy={item.position.y}
+                    r={size + 15}
+                    fill="transparent"
+                    style={{ pointerEvents: 'all', cursor: 'pointer' }}
+                  />
+
                   {/* Island shadow */}
                   <ellipse
                     cx={item.position.x}
@@ -190,6 +212,7 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
                     rx={size * 0.8}
                     ry={size * 0.3}
                     fill="rgba(26, 64, 72, 0.3)"
+                    style={{ pointerEvents: 'none' }}
                   />
 
                   {/* Island body */}
@@ -200,6 +223,7 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
                     fill={color}
                     stroke="#1a4048"
                     strokeWidth="2"
+                    style={{ pointerEvents: 'none' }}
                   />
 
                   {/* Sinking visual for forgotten items */}
@@ -210,6 +234,7 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
                         cy={item.position.y + size * 0.4}
                         r={size * 0.3}
                         fill="rgba(26, 64, 72, 0.5)"
+                        style={{ pointerEvents: 'none' }}
                       />
                       <text
                         x={item.position.x}
@@ -218,6 +243,7 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
                         dominantBaseline="middle"
                         fill="white"
                         fontSize="20"
+                        style={{ pointerEvents: 'none' }}
                       >
                         💤
                       </text>
@@ -232,7 +258,7 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
                     dominantBaseline="middle"
                     fill="white"
                     fontSize="24"
-                    className="pointer-events-none"
+                    style={{ pointerEvents: 'none' }}
                   >
                     {item.source === 'slack' && '💬'}
                     {item.source === 'github' && '⚙️'}
@@ -247,7 +273,7 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
                     fill="#1a1512"
                     fontSize="12"
                     fontWeight="600"
-                    className="pointer-events-none"
+                    style={{ pointerEvents: 'none' }}
                   >
                     {item.title.slice(0, 20)}
                     {item.title.length > 20 && '...'}
@@ -320,12 +346,29 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
 
           {/* Your ship */}
           <g
+            data-testid="ship"
+            role="button"
+            aria-label="Board your ship and view crew"
+            tabIndex={0}
             className="ship cursor-pointer"
             transform={`translate(${ship.position.x}, ${ship.position.y})`}
-            onClick={onNavigateToShip}
+            onClick={(e) => {
+              e.stopPropagation();
+              onNavigateToShip();
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onNavigateToShip();
+              }
+            }}
+            style={{ pointerEvents: 'auto' }}
           >
-            <circle cx="0" cy="0" r="40" fill="#8b4513" stroke="#1a4048" strokeWidth="3" />
-            <polygon points="0,-30 -15,0 0,10 15,0" fill="#f9f6ed" stroke="#1a4048" strokeWidth="2" />
+            {/* Larger invisible hit area */}
+            <circle cx="0" cy="0" r="60" fill="transparent" style={{ pointerEvents: 'all', cursor: 'pointer' }} />
+            
+            <circle cx="0" cy="0" r="40" fill="#8b4513" stroke="#1a4048" strokeWidth="3" style={{ pointerEvents: 'none' }} />
+            <polygon points="0,-30 -15,0 0,10 15,0" fill="#f9f6ed" stroke="#1a4048" strokeWidth="2" style={{ pointerEvents: 'none' }} />
             <text
               x="0"
               y="60"
@@ -333,6 +376,7 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
               fill="#1a1512"
               fontSize="14"
               fontWeight="bold"
+              style={{ pointerEvents: 'none' }}
             >
               {ship.name}
             </text>
@@ -342,6 +386,7 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
               textAnchor="middle"
               fill="white"
               fontSize="24"
+              style={{ pointerEvents: 'none' }}
             >
               🚢
             </text>
@@ -431,20 +476,26 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
               <div className="space-y-3">
                 <h3 className="font-semibold text-ink-900">Actions</h3>
                 <button
+                  data-testid="action-rescue"
                   onClick={() => handleIslandAction('rescue')}
                   className="btn-primary w-full"
+                  aria-label="Rescue this work item"
                 >
                   ⚓ Rescue (move closer, prioritize)
                 </button>
                 <button
+                  data-testid="action-done"
                   onClick={() => handleIslandAction('done')}
                   className="btn-secondary w-full"
+                  aria-label="Mark this work as done"
                 >
                   ✓ Mark as Done
                 </button>
                 <button
+                  data-testid="action-dismiss"
                   onClick={() => handleIslandAction('dismiss')}
                   className="btn-secondary w-full"
+                  aria-label="Dismiss this work item"
                 >
                   🌊 Dismiss (let drift)
                 </button>

@@ -48,8 +48,10 @@ export function Gifts() {
                     <p className="text-sm text-ink-700">From {chest.from}</p>
                     <p className="text-xs text-ink-700 mt-1">{chest.date.toLocaleDateString()}</p>
                     <button
+                      data-testid={`btn-open-chest-${chest.id}`}
                       onClick={() => handleOpenChest(chest.id)}
                       className="btn-primary text-sm mt-4"
+                      aria-label={`Open gift from ${chest.from}`}
                     >
                       Open Chest
                     </button>
