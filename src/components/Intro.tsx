@@ -22,13 +22,13 @@ export function Intro({ onDone }: { onDone: () => void }) {
     <motion.section id="intro" aria-label="Welcome" exit={{ opacity: 0, scale: 1.08, filter: 'blur(12px)' }} transition={{ duration: .9, ease: [.22, 1, .36, 1] }}>
       <canvas ref={cv} />
       <div className="intro-sea" aria-hidden="true">
-        <svg viewBox="0 0 1600 400" preserveAspectRatio="none">
-          {[['w1', 120], ['w2', 170], ['w3', 230]].map(([k, y]) => <path key={k} className={'w ' + k} d={`M-400 ${y} ` + Array.from({ length: 10 }, (_, i) => `Q${-300 + i * 200} ${+y - 40} ${-200 + i * 200} ${y}`).join(' ') + ' V400 H-400Z'} />)}
+        <svg viewBox="0 0 1800 500" preserveAspectRatio="none">
+          {[['w1', 140, 120], ['w2', 200, 170], ['w3', 280, 230]].map(([k, y1, y2]) => <path key={k} className={'w ' + k} d={`M-600 ${y2} ` + Array.from({ length: 13 }, (_, i) => `Q${-500 + i * 200} ${+y1} ${-400 + i * 200} ${y2}`).join(' ') + ' V500 H-600Z'} />)}
         </svg>
       </div>
-      <svg className="intro-ship" viewBox="-60 -130 160 150" aria-hidden="true">
-        <g><path d="M-50 0 Q-20 22 40 22 Q70 20 92 -14 L-44 -14Z" fill="#05090d" /><path d="M-2 -14 V-118" stroke="#05090d" strokeWidth="3" />
-          <path d="M2 -112 Q54 -80 46 -28 L2 -26Z" fill="#0b141c" stroke="#05090d" strokeWidth="2" /><path d="M-4 -100 Q-40 -66 -34 -26 L-4 -26Z" fill="#0b141c" stroke="#05090d" strokeWidth="2" /><path d="M-2 -118 l24 -6 -24 -6z" fill="#b4432d" /></g>
+      <svg className="intro-ship" viewBox="-70 -140 180 160" aria-hidden="true">
+        <g><path d="M-54 0 Q-22 24 44 24 Q76 22 100 -16 L-48 -16Z" fill="#05090d" /><path d="M-2 -16 V-126" stroke="#05090d" strokeWidth="3.5" />
+          <path d="M2 -120 Q60 -86 50 -32 L2 -30Z" fill="#0b141c" stroke="#05090d" strokeWidth="2.2" /><path d="M-4 -106 Q-44 -70 -38 -30 L-4 -30Z" fill="#0b141c" stroke="#05090d" strokeWidth="2.2" /><path d="M-2 -126 l26 -7 -26 -7z" fill="#b4432d" /></g>
       </svg>
       <div className="intro-copy">
         <motion.p className="eyebrow" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .3, duration: 1 }}>An AI-guided voyage through your work</motion.p>
