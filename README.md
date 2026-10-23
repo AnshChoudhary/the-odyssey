@@ -4,6 +4,16 @@ An AI-run HR performance & appraisal experience where every employee's work is v
 
 ![The Work Odyssey - Main Map View](assets/mockup.png)
 
+## Run it
+
+```bash
+npm install
+npm run dev      # http://localhost:5173
+npm run build    # type-check + production bundle in dist/
+```
+
+**Stack:** Vite, React 18, TypeScript, Framer Motion, Zustand. The sea chart is hand-built SVG with a custom spring camera (drag, scroll-zoom, fly-to-island), and every view is a themed scene joined by a wave-wipe transition. Press `⌘K` for the command menu and `Esc` to return to the chart. The original single-file prototype lives in `prototype/index.html`.
+
 ## Concept
 
 The Work Odyssey reimagines performance tracking and HR appraisals through a narrative, visual interface inspired by ancient maritime charts. Instead of sterile dashboards and cold metrics, employees see their work as an evolving journey across a living sea map.
