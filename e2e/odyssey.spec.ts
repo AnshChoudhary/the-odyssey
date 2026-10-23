@@ -196,11 +196,11 @@ test.describe('The Work Odyssey', () => {
     // Detail panel should appear with bond strength
     await expect(page.locator('text=Bond Strength')).toBeVisible({ timeout: 10000 });
     
-    // Close panel
-    await page.locator('button:has-text("×")').first().click();
+    // Close panel by clicking backdrop
+    await page.locator('.fixed.inset-0.bg-\\[\\#2d2419\\]').click({ position: { x: 10, y: 10 } });
     
-    // Panel should be hidden
-    await expect(page.locator('text=Bond Strength')).not.toBeVisible();
+    // Wait for panel to close (with timeout for exit animation)
+    await expect(page.locator('text=Bond Strength')).not.toBeVisible({ timeout: 10000 });
   });
 
   test("should swipe cards in Captain's Log", async ({ page }) => {
