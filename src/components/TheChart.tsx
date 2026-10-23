@@ -1,11 +1,21 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { WorkItem } from '../types';
 import { mockUserProfile, getWorkItemById } from '../data/mockData';
+import {
+  generateIslandPath,
+  generateShorelineRings,
+  generateCloudPath,
+  findNonOverlappingPosition,
+  type Box,
+} from '../utils/islandGenerator';
 
 interface ChartProps {
   onNavigateToShip: () => void;
 }
+
+const MAP_WIDTH = 1600;
+const MAP_HEIGHT = 1200;
 
 export function TheChart({ onNavigateToShip }: ChartProps) {
   const [selectedIsland, setSelectedIsland] = useState<string | null>(null);
@@ -13,13 +23,49 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
   const [scale, setScale] = useState(1);
   const [isPanning, setIsPanning] = useState(false);
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const [showHint, setShowHint] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const workItems = mockUserProfile.workItems;
   const ship = mockUserProfile.ship;
   const selectedWork = selectedIsland ? getWorkItemById(selectedIsland) : null;
+  const userName = mockUserProfile.name;
 
-  // Pan handlers
+  // Fade hint after 4 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => setShowHint(false), 4000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Generate stable island positions with collision avoidance
+  const islandData = useMemo(() => {
+    const boxes: Box[] = [];
+    const data = workItems
+      .filter(item => item.status !== 'done')
+      .map(item => {
+        const size = 20 + item.size * 4;
+        let pos = findNonOverlappingPosition(boxes, size, { width: 800, height: 800 });
+        
+        if (!pos) {
+          pos = { x: item.position.x, y: item.position.y };
+        }
+        
+        boxes.push({ x: pos.x - size, y: pos.y - size, width: size * 2, height: size * 2 });
+        
+        return {
+          ...item,
+          position: pos,
+          size,
+          path: generateIslandPath(pos.x, pos.y, size, item.id),
+          shorelines: generateShorelineRings(pos.x, pos.y, size, item.id, 1),
+        };
+      });
+    
+    return data;
+  }, [workItems]);
+
+  const doneItems = workItems.filter(item => item.status === 'done');
+
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget || (e.target as HTMLElement).classList.contains('map-layer')) {
       setIsPanning(true);
@@ -37,7 +83,6 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
     setIsPanning(false);
   };
 
-  // Zoom handlers
   const handleWheel = (e: React.WheelEvent) => {
     e.preventDefault();
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
@@ -56,40 +101,45 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
 
   const handleIslandAction = (action: 'rescue' | 'dismiss' | 'done') => {
     if (!selectedWork) return;
-    
-    // In a real app, this would update the backend
     console.log(`Action ${action} on work item:`, selectedWork.id);
     setSelectedIsland(null);
-    
-    // Animate the change
-    // For now, just close the panel
   };
 
   const getIslandColor = (status: WorkItem['status']) => {
     switch (status) {
-      case 'active': return '#4db8cc';
-      case 'needs-attention': return '#e07a5f';
-      case 'forgotten': return '#81b29a';
-      case 'done': return '#3d5a80';
+      case 'active': return '#c9af81';
+      case 'needs-attention': return '#b8956f';
+      case 'forgotten': return '#9d9183';
+      case 'done': return '#7a6d5e';
     }
   };
 
-  const getIslandSize = (size: number) => {
-    return 30 + size * 5;
+  const getSourceIcon = (source: WorkItem['source']) => {
+    switch (source) {
+      case 'slack': return '💬';
+      case 'github': return '⚙️';
+      case 'zoom': return '📹';
+    }
   };
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-gradient-to-b from-ocean-100 via-ocean-300 to-ocean-500">
-      {/* View title */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="absolute top-24 left-1/2 transform -translate-x-1/2 z-30 glass-panel px-6 py-3"
-      >
-        <p className="text-sm text-ink-900 text-center">
-          Your living map of work — pan with mouse, zoom with scroll, click islands for details
-        </p>
-      </motion.div>
+    <div className="relative w-full h-screen overflow-hidden bg-[#e8dcc7]">
+      {/* Hint text */}
+      <AnimatePresence>
+        {showHint && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.5 }}
+            className="absolute top-32 left-1/2 transform -translate-x-1/2 z-30 bg-[#f4efe6]/95 backdrop-blur-sm px-8 py-4 rounded border border-[#8b7355]/20 shadow-lg"
+          >
+            <p className="text-sm text-[#2d2419] text-center font-serif italic">
+              Pan with mouse • Zoom with scroll • Click islands for details
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* The Map Canvas */}
       <div
@@ -102,83 +152,257 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
         onWheel={handleWheel}
       >
         <svg
-          className="absolute inset-0 w-full h-full pointer-events-none"
+          className="absolute inset-0 w-full h-full"
+          viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
           style={{
             transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
             transformOrigin: '50% 50%',
           }}
         >
           <defs>
-            {/* Water texture pattern */}
-            <pattern id="water" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
-              <path
-                d="M0 50 Q 25 45, 50 50 T 100 50"
-                fill="none"
-                stroke="rgba(255, 255, 255, 0.2)"
-                strokeWidth="1"
-              >
-                <animate
-                  attributeName="d"
-                  values="M0 50 Q 25 45, 50 50 T 100 50;M0 50 Q 25 55, 50 50 T 100 50;M0 50 Q 25 45, 50 50 T 100 50"
-                  dur="4s"
-                  repeatCount="indefinite"
-                />
-              </path>
+            {/* Parchment texture */}
+            <filter id="parchment-texture">
+              <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" result="noise" />
+              <feColorMatrix in="noise" type="saturate" values="0" />
+              <feComponentTransfer>
+                <feFuncA type="discrete" tableValues="0.03" />
+              </feComponentTransfer>
+              <feBlend in="SourceGraphic" in2="noise" mode="multiply" />
+            </filter>
+
+            {/* Vignette */}
+            <radialGradient id="vignette">
+              <stop offset="0%" stopColor="#e8dcc7" stopOpacity="0" />
+              <stop offset="70%" stopColor="#e8dcc7" stopOpacity="0" />
+              <stop offset="100%" stopColor="#2d2419" stopOpacity="0.3" />
+            </radialGradient>
+
+            {/* Ink hatching pattern */}
+            <pattern id="ink-hatching" x="0" y="0" width="4" height="4" patternUnits="userSpaceOnUse">
+              <line x1="0" y1="4" x2="4" y2="0" stroke="#3f3320" strokeWidth="0.5" opacity="0.3" />
             </pattern>
 
-            {/* Stormy water for needs-attention items */}
-            <filter id="turbulence">
-              <feTurbulence type="turbulence" baseFrequency="0.05" numOctaves="2">
-                <animate
-                  attributeName="baseFrequency"
-                  values="0.05;0.08;0.05"
-                  dur="3s"
-                  repeatCount="indefinite"
-                />
-              </feTurbulence>
-              <feDisplacementMap in="SourceGraphic" scale="10" />
-            </filter>
+            {/* Water contour lines */}
+            <pattern id="water-contours" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+              <path
+                d="M0 20 Q 25 15, 50 20 T 100 20"
+                fill="none"
+                stroke="#6b8e9d"
+                strokeWidth="0.8"
+                opacity="0.2"
+              />
+              <path
+                d="M0 40 Q 25 35, 50 40 T 100 40"
+                fill="none"
+                stroke="#6b8e9d"
+                strokeWidth="0.8"
+                opacity="0.15"
+              />
+            </pattern>
+
+            {/* Rain pattern for stormy islands */}
+            <pattern id="rain" x="0" y="0" width="10" height="20" patternUnits="userSpaceOnUse">
+              <line x1="5" y1="0" x2="3" y2="20" stroke="#4a5f75" strokeWidth="1" opacity="0.4">
+                <animate attributeName="y1" values="0;20;0" dur="1s" repeatCount="indefinite" />
+                <animate attributeName="y2" values="20;40;20" dur="1s" repeatCount="indefinite" />
+              </line>
+            </pattern>
           </defs>
 
-          {/* Background water */}
-          <rect x="0" y="0" width="2000" height="2000" fill="url(#water)" opacity="0.3" />
+          {/* Parchment background */}
+          <rect
+            x="0"
+            y="0"
+            width={MAP_WIDTH}
+            height={MAP_HEIGHT}
+            fill="#e8dcc7"
+            filter="url(#parchment-texture)"
+          />
 
-          {/* Routes to teammates (dotted lines) */}
-          {mockUserProfile.crew.slice(0, 3).map((crew, idx) => (
+          {/* Decorative border */}
+          <rect
+            x="20"
+            y="20"
+            width={MAP_WIDTH - 40}
+            height={MAP_HEIGHT - 40}
+            fill="none"
+            stroke="#8b7355"
+            strokeWidth="3"
+            strokeDasharray="10,5"
+            opacity="0.6"
+          />
+          <rect
+            x="30"
+            y="30"
+            width={MAP_WIDTH - 60}
+            height={MAP_HEIGHT - 60}
+            fill="none"
+            stroke="#8b7355"
+            strokeWidth="1"
+            opacity="0.4"
+          />
+
+          {/* Cartouche title */}
+          <g transform="translate(80, 60)">
+            <rect x="-10" y="-30" width="420" height="60" fill="#f4efe6" stroke="#8b7355" strokeWidth="2" rx="4" opacity="0.95" />
+            <text
+              x="0"
+              y="0"
+              fontFamily="Playfair Display"
+              fontSize="24"
+              fontWeight="700"
+              fill="#2d2419"
+            >
+              The Voyage of {userName}
+            </text>
+            <text
+              x="0"
+              y="20"
+              fontFamily="Inter"
+              fontSize="12"
+              fill="#5a4a3a"
+              fontStyle="italic"
+            >
+              Week 43 · Anno MMXXVI
+            </text>
+          </g>
+
+          {/* Compass rose */}
+          <g transform="translate(1450, 100)">
+            <circle cx="0" cy="0" r="50" fill="#f4efe6" stroke="#8b7355" strokeWidth="2" opacity="0.9" />
+            <circle cx="0" cy="0" r="48" fill="none" stroke="#8b7355" strokeWidth="1" opacity="0.5" />
+            {/* North point */}
+            <polygon points="0,-40 -8,-15 8,-15" fill="#2d2419" />
+            <polygon points="0,40 -8,15 8,15" fill="#8b7355" />
+            <polygon points="-40,0 -15,-8 -15,8" fill="#8b7355" />
+            <polygon points="40,0 15,-8 15,8" fill="#8b7355" />
+            <text
+              x="0"
+              y="-50"
+              textAnchor="middle"
+              dominantBaseline="middle"
+              fontFamily="Playfair Display"
+              fontSize="16"
+              fontWeight="bold"
+              fill="#2d2419"
+            >
+              N
+            </text>
+          </g>
+
+          {/* Ocean with contours */}
+          <rect
+            x="100"
+            y="150"
+            width="1000"
+            height="900"
+            fill="url(#water-contours)"
+            opacity="1"
+          />
+
+          {/* Rhumb lines (subtle diagonal lines) */}
+          {[...Array(8)].map((_, i) => (
             <line
-              key={crew.id}
-              x1={ship.position.x}
-              y1={ship.position.y}
-              x2={ship.position.x + (idx + 1) * 150}
-              y2={ship.position.y - (idx + 1) * 80}
-              stroke="#2a6b7a"
-              strokeWidth="2"
-              strokeDasharray="5,5"
-              opacity="0.4"
+              key={`rhumb-${i}`}
+              x1={200 + i * 150}
+              y1="150"
+              x2={300 + i * 150}
+              y2="1050"
+              stroke="#8b7355"
+              strokeWidth="0.5"
+              strokeDasharray="5,10"
+              opacity="0.15"
             />
           ))}
 
-          {/* Islands (work items) */}
-          {workItems.map((item) => {
-            const size = getIslandSize(item.size);
+          {/* Dotted routes to teammates */}
+          {mockUserProfile.crew.slice(0, 3).map((crew, idx) => {
+            const endX = ship.position.x + (idx + 1) * 180 + (idx * 50);
+            const endY = ship.position.y - (idx + 1) * 100;
+            return (
+              <g key={crew.id}>
+                <path
+                  d={`M ${ship.position.x} ${ship.position.y} Q ${(ship.position.x + endX) / 2} ${ship.position.y - 80} ${endX} ${endY}`}
+                  fill="none"
+                  stroke="#6b8e9d"
+                  strokeWidth="2"
+                  strokeDasharray="8,6"
+                  opacity="0.4"
+                  style={{ pointerEvents: 'none' }}
+                />
+              </g>
+            );
+          })}
+
+          {/* Islands */}
+          {islandData.map((item) => {
             const color = getIslandColor(item.status);
-            const isStormyWater = item.status === 'needs-attention';
+            const isStormy = item.status === 'needs-attention';
+            const isSinking = item.status === 'forgotten';
 
             return (
               <g key={item.id} data-testid={`island-${item.id}`}>
-                {/* Stormy water around urgent items */}
-                {isStormyWater && (
-                  <circle
-                    cx={item.position.x}
-                    cy={item.position.y}
-                    r={size + 20}
-                    fill="rgba(224, 122, 95, 0.2)"
-                    filter="url(#turbulence)"
-                    style={{ pointerEvents: 'none' }}
-                  />
+                {/* Stormy weather */}
+                {isStormy && (
+                  <g style={{ pointerEvents: 'none' }}>
+                    {[0, 1, 2].map(i => {
+                      const cloudPath = generateCloudPath(item.position.x - 40 + i * 15, item.position.y - 60 - i * 10, 60, item.id + i);
+                      return (
+                        <path
+                          key={`cloud-${i}`}
+                          d={cloudPath}
+                          fill="#6b7b8c"
+                          opacity="0.6"
+                        />
+                      );
+                    })}
+                    <rect
+                      x={item.position.x - item.size - 10}
+                      y={item.position.y - item.size - 10}
+                      width={item.size * 2 + 20}
+                      height={item.size * 2 + 40}
+                      fill="url(#rain)"
+                      opacity="0.5"
+                      style={{ pointerEvents: 'none' }}
+                    />
+                  </g>
                 )}
 
-                {/* The island - clickable group */}
+                {/* Sinking ripples */}
+                {isSinking && (
+                  <g style={{ pointerEvents: 'none' }}>
+                    {[1, 2, 3].map(i => (
+                      <ellipse
+                        key={`ripple-${i}`}
+                        cx={item.position.x}
+                        cy={item.position.y}
+                        rx={item.size + i * 15}
+                        ry={item.size * 0.3 + i * 5}
+                        fill="none"
+                        stroke="#6b8e9d"
+                        strokeWidth="1.5"
+                        opacity="0"
+                      >
+                        <animate
+                          attributeName="opacity"
+                          values="0;0.4;0"
+                          dur="2s"
+                          repeatCount="indefinite"
+                          begin={`${i * 0.5}s`}
+                        />
+                        <animate
+                          attributeName="rx"
+                          values={`${item.size};${item.size + i * 15};${item.size + i * 20}`}
+                          dur="2s"
+                          repeatCount="indefinite"
+                          begin={`${i * 0.5}s`}
+                        />
+                      </ellipse>
+                    ))}
+                  </g>
+                )}
+
+                {/* The island */}
                 <g
                   role="button"
                   aria-label={`View details for ${item.title}`}
@@ -196,151 +420,173 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
                   }}
                   style={{ pointerEvents: 'auto' }}
                 >
-                  {/* Larger invisible hit area */}
+                  {/* Hit area */}
                   <circle
                     cx={item.position.x}
                     cy={item.position.y}
-                    r={size + 15}
+                    r={item.size + 20}
                     fill="transparent"
                     style={{ pointerEvents: 'all', cursor: 'pointer' }}
                   />
 
-                  {/* Island shadow */}
-                  <ellipse
-                    cx={item.position.x}
-                    cy={item.position.y + size * 0.8}
-                    rx={size * 0.8}
-                    ry={size * 0.3}
-                    fill="rgba(26, 64, 72, 0.3)"
-                    style={{ pointerEvents: 'none' }}
-                  />
+                  {/* Shoreline rings */}
+                  {item.shorelines.map((shore, idx) => (
+                    <path
+                      key={`shore-${idx}`}
+                      d={shore}
+                      fill="none"
+                      stroke="#8b7355"
+                      strokeWidth="0.5"
+                      opacity={isSinking ? "0.3" : "0.5"}
+                      style={{ pointerEvents: 'none' }}
+                    />
+                  ))}
 
                   {/* Island body */}
-                  <circle
-                    cx={item.position.x}
-                    cy={item.position.y}
-                    r={size}
+                  <path
+                    d={item.path}
                     fill={color}
-                    stroke="#1a4048"
+                    stroke="#3f3320"
                     strokeWidth="2"
+                    opacity={isSinking ? "0.5" : "1"}
                     style={{ pointerEvents: 'none' }}
                   />
 
-                  {/* Sinking visual for forgotten items */}
-                  {item.status === 'forgotten' && (
-                    <>
-                      <circle
-                        cx={item.position.x}
-                        cy={item.position.y + size * 0.4}
-                        r={size * 0.3}
-                        fill="rgba(26, 64, 72, 0.5)"
-                        style={{ pointerEvents: 'none' }}
-                      />
-                      <text
-                        x={item.position.x}
-                        y={item.position.y}
-                        textAnchor="middle"
-                        dominantBaseline="middle"
-                        fill="white"
-                        fontSize="20"
-                        style={{ pointerEvents: 'none' }}
-                      >
-                        💤
-                      </text>
-                    </>
-                  )}
+                  {/* Terrain hatching */}
+                  <path
+                    d={item.path}
+                    fill="url(#ink-hatching)"
+                    style={{ pointerEvents: 'none' }}
+                  />
 
                   {/* Source icon */}
                   <text
                     x={item.position.x}
-                    y={item.position.y}
+                    y={item.position.y - 5}
                     textAnchor="middle"
                     dominantBaseline="middle"
-                    fill="white"
-                    fontSize="24"
+                    fontSize="18"
                     style={{ pointerEvents: 'none' }}
                   >
-                    {item.source === 'slack' && '💬'}
-                    {item.source === 'github' && '⚙️'}
-                    {item.source === 'zoom' && '📹'}
+                    {getSourceIcon(item.source)}
                   </text>
 
                   {/* Label */}
                   <text
                     x={item.position.x}
-                    y={item.position.y + size + 20}
+                    y={item.position.y + item.size + 25}
                     textAnchor="middle"
-                    fill="#1a1512"
-                    fontSize="12"
+                    fill="#2d2419"
+                    fontSize="11"
+                    fontFamily="Playfair Display"
                     fontWeight="600"
                     style={{ pointerEvents: 'none' }}
                   >
-                    {item.title.slice(0, 20)}
-                    {item.title.length > 20 && '...'}
+                    {item.title}
                   </text>
                 </g>
               </g>
             );
           })}
 
-          {/* The Shipped Continent (done work) */}
-          <g transform="translate(750, 250)">
-            <ellipse
-              cx="0"
-              cy="0"
-              rx="180"
-              ry="120"
-              fill="#3d5a80"
-              stroke="#1a4048"
-              strokeWidth="3"
+          {/* The Shipped Continent */}
+          <g transform="translate(1100, 400)">
+            {/* Coastline */}
+            <path
+              d="M 0,0 Q 30,-40 80,-50 T 180,-40 Q 230,-30 280,-10 T 350,30 Q 380,60 380,100 T 340,160 Q 300,180 240,190 T 120,190 Q 60,180 20,150 T 0,80 Z"
+              fill="#8b7355"
+              stroke="#3f3320"
+              strokeWidth="2.5"
             />
+            <path
+              d="M 0,0 Q 30,-40 80,-50 T 180,-40 Q 230,-30 280,-10 T 350,30 Q 380,60 380,100 T 340,160 Q 300,180 240,190 T 120,190 Q 60,180 20,150 T 0,80 Z"
+              fill="url(#ink-hatching)"
+            />
+
+            {/* Done items as ports */}
+            {doneItems.slice(0, 3).map((item, idx) => (
+              <g key={item.id} transform={`translate(${60 + idx * 120}, ${80 + idx * 20})`}>
+                <circle cx="0" cy="0" r="5" fill="#3f3320" />
+                <text
+                  x="0"
+                  y="18"
+                  textAnchor="middle"
+                  fontSize="9"
+                  fontFamily="Playfair Display"
+                  fill="#2d2419"
+                  fontStyle="italic"
+                >
+                  {item.title.slice(0, 12)}
+                </text>
+              </g>
+            ))}
+
             <text
-              x="0"
-              y="-10"
+              x="190"
+              y="-70"
               textAnchor="middle"
-              fill="white"
-              fontSize="18"
-              fontWeight="bold"
               fontFamily="Playfair Display"
-            >
-              The Shipped
-            </text>
-            <text
-              x="0"
-              y="10"
-              textAnchor="middle"
-              fill="white"
-              fontSize="18"
+              fontSize="20"
               fontWeight="bold"
-              fontFamily="Playfair Display"
+              fill="#2d2419"
             >
-              Continent
+              The Shipped Continent
             </text>
           </g>
 
-          {/* Ithaca on the horizon (goals) */}
-          <g transform="translate(1200, 100)">
-            <circle cx="0" cy="0" r="60" fill="#c9af81" stroke="#1a4048" strokeWidth="2" />
+          {/* Ithaca on the horizon */}
+          <g transform="translate(1400, 200)">
+            {/* Glow */}
+            <circle cx="0" cy="0" r="40" fill="#f4d03f" opacity="0.3">
+              <animate
+                attributeName="r"
+                values="35;45;35"
+                dur="3s"
+                repeatCount="indefinite"
+              />
+              <animate
+                attributeName="opacity"
+                values="0.2;0.4;0.2"
+                dur="3s"
+                repeatCount="indefinite"
+              />
+            </circle>
+            {/* Island */}
+            <path
+              d={generateIslandPath(0, 0, 25, 'ithaca')}
+              fill="#c9af81"
+              stroke="#8b7355"
+              strokeWidth="2"
+            />
+            {/* Star */}
             <text
               x="0"
-              y="5"
+              y="-40"
               textAnchor="middle"
-              fill="#1a1512"
-              fontSize="20"
-              fontWeight="bold"
+              fontSize="24"
+            >
+              ⭐
+            </text>
+            <text
+              x="0"
+              y="50"
+              textAnchor="middle"
               fontFamily="Playfair Display"
+              fontSize="16"
+              fontWeight="bold"
+              fill="#2d2419"
             >
               Ithaca
             </text>
             <text
               x="0"
-              y="-75"
+              y="68"
               textAnchor="middle"
-              fill="#1a1512"
-              fontSize="12"
-              opacity="0.7"
+              fontSize="10"
+              fill="#5a4a3a"
+              fontStyle="italic"
             >
-              ⭐ Your North Star
+              Your North Star
             </text>
           </g>
 
@@ -350,7 +596,6 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
             role="button"
             aria-label="Board your ship and view crew"
             tabIndex={0}
-            className="ship cursor-pointer"
             transform={`translate(${ship.position.x}, ${ship.position.y})`}
             onClick={(e) => {
               e.stopPropagation();
@@ -364,33 +609,93 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
             }}
             style={{ pointerEvents: 'auto' }}
           >
-            {/* Larger invisible hit area */}
+            {/* Hit area */}
             <circle cx="0" cy="0" r="60" fill="transparent" style={{ pointerEvents: 'all', cursor: 'pointer' }} />
-            
-            <circle cx="0" cy="0" r="40" fill="#8b4513" stroke="#1a4048" strokeWidth="3" style={{ pointerEvents: 'none' }} />
-            <polygon points="0,-30 -15,0 0,10 15,0" fill="#f9f6ed" stroke="#1a4048" strokeWidth="2" style={{ pointerEvents: 'none' }} />
+
+            {/* Wake trail */}
+            <ellipse
+              cx="0"
+              cy="10"
+              rx="25"
+              ry="12"
+              fill="none"
+              stroke="#6b8e9d"
+              strokeWidth="2"
+              strokeDasharray="4,3"
+              opacity="0.4"
+              style={{ pointerEvents: 'none' }}
+            >
+              <animate
+                attributeName="rx"
+                values="25;30;25"
+                dur="2s"
+                repeatCount="indefinite"
+              />
+              <animate
+                attributeName="opacity"
+                values="0.4;0.2;0.4"
+                dur="2s"
+                repeatCount="indefinite"
+              />
+            </ellipse>
+
+            {/* Ship body with bob animation */}
+            <g style={{ pointerEvents: 'none' }}>
+              <animateTransform
+                attributeName="transform"
+                type="translate"
+                values="0,0; 0,-3; 0,0"
+                dur="3s"
+                repeatCount="indefinite"
+              />
+              {/* Hull */}
+              <path
+                d="M -20,5 Q -20,15 0,18 Q 20,15 20,5 L 15,-5 L -15,-5 Z"
+                fill="#6b4423"
+                stroke="#3f3320"
+                strokeWidth="2"
+              />
+              {/* Deck */}
+              <rect x="-15" y="-8" width="30" height="3" fill="#8b7355" stroke="#3f3320" strokeWidth="1" />
+              {/* Mast */}
+              <line x1="0" y1="-8" x2="0" y2="-35" stroke="#3f3320" strokeWidth="2.5" />
+              {/* Sail */}
+              <path
+                d="M 0,-35 Q 15,-25 15,-10 L 0,-8 Z"
+                fill="#f4efe6"
+                stroke="#3f3320"
+                strokeWidth="1.5"
+              />
+              {/* Flag */}
+              <path
+                d="M 0,-35 L 12,-32 L 0,-29"
+                fill="#d4a574"
+              />
+            </g>
+
             <text
               x="0"
-              y="60"
+              y="40"
               textAnchor="middle"
-              fill="#1a1512"
-              fontSize="14"
-              fontWeight="bold"
+              fill="#2d2419"
+              fontSize="12"
+              fontFamily="Playfair Display"
+              fontWeight="600"
               style={{ pointerEvents: 'none' }}
             >
               {ship.name}
             </text>
-            <text
-              x="0"
-              y="5"
-              textAnchor="middle"
-              fill="white"
-              fontSize="24"
-              style={{ pointerEvents: 'none' }}
-            >
-              🚢
-            </text>
           </g>
+
+          {/* Vignette overlay */}
+          <rect
+            x="0"
+            y="0"
+            width={MAP_WIDTH}
+            height={MAP_HEIGHT}
+            fill="url(#vignette)"
+            style={{ pointerEvents: 'none' }}
+          />
         </svg>
       </div>
 
@@ -402,7 +707,7 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-ink-900 bg-opacity-50 z-40 backdrop-blur-sm"
+              className="fixed inset-0 bg-[#2d2419] bg-opacity-50 z-40 backdrop-blur-sm"
               onClick={() => setSelectedIsland(null)}
             />
             <motion.div
@@ -410,63 +715,66 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
               animate={{ x: 0 }}
               exit={{ x: 400 }}
               transition={{ type: 'spring', damping: 25 }}
-              className="fixed right-0 top-0 bottom-0 w-96 glass-panel z-50 overflow-y-auto p-6"
+              className="fixed right-0 top-0 bottom-0 w-96 bg-[#f4efe6]/98 backdrop-blur-sm z-50 overflow-y-auto p-6 shadow-2xl border-l-2 border-[#8b7355]"
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' /%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E")`,
+              }}
             >
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <span className="text-xs font-semibold text-ocean-700 uppercase tracking-wider">
+                  <span className="text-xs font-semibold text-[#8b7355] uppercase tracking-wider font-sans">
                     {selectedWork.source} • {selectedWork.type}
                   </span>
-                  <h2 className="text-2xl font-display font-bold text-ink-900 mt-1">
+                  <h2 className="text-2xl font-display font-bold text-[#2d2419] mt-1 leading-tight">
                     {selectedWork.title}
                   </h2>
                 </div>
                 <button
                   onClick={() => setSelectedIsland(null)}
-                  className="text-ink-700 hover:text-ink-900 text-2xl"
+                  className="text-[#5a4a3a] hover:text-[#2d2419] text-2xl leading-none"
                 >
                   ×
                 </button>
               </div>
 
-              <p className="text-ink-900 mb-4">{selectedWork.description}</p>
+              <p className="text-[#3f3320] mb-4 leading-relaxed">{selectedWork.description}</p>
 
-              <div className="space-y-3 mb-6">
+              <div className="space-y-3 mb-6 border-t border-[#8b7355]/20 pt-4">
                 <div className="flex justify-between text-sm">
-                  <span className="text-ink-700">Status</span>
-                  <span className="font-medium capitalize">{selectedWork.status.replace('-', ' ')}</span>
+                  <span className="text-[#5a4a3a] font-sans">Status</span>
+                  <span className="font-medium font-display capitalize">{selectedWork.status.replace('-', ' ')}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-ink-700">Created</span>
-                  <span className="font-medium">{selectedWork.createdAt.toLocaleDateString()}</span>
+                  <span className="text-[#5a4a3a] font-sans">Created</span>
+                  <span className="font-medium font-sans">{selectedWork.createdAt.toLocaleDateString()}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-ink-700">Last updated</span>
-                  <span className="font-medium">{selectedWork.lastUpdated.toLocaleDateString()}</span>
+                  <span className="text-[#5a4a3a] font-sans">Last updated</span>
+                  <span className="font-medium font-sans">{selectedWork.lastUpdated.toLocaleDateString()}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-ink-700">Size</span>
-                  <span className="font-medium">{selectedWork.size}/10</span>
+                  <span className="text-[#5a4a3a] font-sans">Effort</span>
+                  <span className="font-medium font-sans">{selectedWork.size}/10</span>
                 </div>
               </div>
 
               {selectedWork.interactions.length > 0 && (
                 <div className="mb-6">
-                  <h3 className="font-semibold text-ink-900 mb-2">Recent Activity</h3>
+                  <h3 className="font-display font-semibold text-[#2d2419] mb-2">Recent Activity</h3>
                   <div className="space-y-2">
                     {selectedWork.interactions.map((interaction) => (
-                      <div key={interaction.id} className="text-sm bg-parchment-100 p-3 rounded-lg">
+                      <div key={interaction.id} className="text-sm bg-[#e8dcc7]/50 p-3 rounded border border-[#8b7355]/10">
                         <div className="flex items-center gap-2 mb-1">
                           <span>
                             {interaction.type === 'slack-message' && '💬'}
                             {interaction.type === 'github-commit' && '⚙️'}
                             {interaction.type === 'zoom-meeting' && '📹'}
                           </span>
-                          <span className="text-ink-700 text-xs">
+                          <span className="text-[#5a4a3a] text-xs font-sans">
                             {interaction.date.toLocaleDateString()}
                           </span>
                         </div>
-                        <p className="text-ink-900">{interaction.summary}</p>
+                        <p className="text-[#3f3320]">{interaction.summary}</p>
                       </div>
                     ))}
                   </div>
@@ -474,19 +782,19 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
               )}
 
               <div className="space-y-3">
-                <h3 className="font-semibold text-ink-900">Actions</h3>
+                <h3 className="font-display font-semibold text-[#2d2419]">Actions</h3>
                 <button
                   data-testid="action-rescue"
                   onClick={() => handleIslandAction('rescue')}
-                  className="btn-primary w-full"
+                  className="w-full px-6 py-3 bg-[#6b8e9d] text-[#f4efe6] rounded font-medium hover:bg-[#5a7d8c] transition-all duration-200 font-sans shadow-sm"
                   aria-label="Rescue this work item"
                 >
-                  ⚓ Rescue (move closer, prioritize)
+                  ⚓ Rescue
                 </button>
                 <button
                   data-testid="action-done"
                   onClick={() => handleIslandAction('done')}
-                  className="btn-secondary w-full"
+                  className="w-full px-6 py-3 bg-[#e8dcc7] text-[#2d2419] rounded font-medium hover:bg-[#d4c9b3] transition-all duration-200 border border-[#8b7355]/20 font-sans"
                   aria-label="Mark this work as done"
                 >
                   ✓ Mark as Done
@@ -494,10 +802,10 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
                 <button
                   data-testid="action-dismiss"
                   onClick={() => handleIslandAction('dismiss')}
-                  className="btn-secondary w-full"
+                  className="w-full px-6 py-3 bg-[#e8dcc7] text-[#2d2419] rounded font-medium hover:bg-[#d4c9b3] transition-all duration-200 border border-[#8b7355]/20 font-sans"
                   aria-label="Dismiss this work item"
                 >
-                  🌊 Dismiss (let drift)
+                  🌊 Dismiss
                 </button>
               </div>
             </motion.div>
