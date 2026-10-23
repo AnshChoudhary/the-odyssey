@@ -7,6 +7,7 @@ import {
   generateShorelineRings,
   generateCloudPath,
   findNonOverlappingPosition,
+  generateSeaHatching,
   type Box,
 } from '../utils/islandGenerator';
 
@@ -42,21 +43,31 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
     const boxes: Box[] = [];
     const data = workItems
       .filter(item => item.status !== 'done')
-      .map(item => {
+      .map((item, idx) => {
         const size = 20 + item.size * 4;
-        let pos = findNonOverlappingPosition(boxes, size, { width: 800, height: 800 });
+        const padding = 70; // Extra space for labels
+        let pos = findNonOverlappingPosition(boxes, size, { width: 900, height: 700 }, 100, padding);
         
         if (!pos) {
-          pos = { x: item.position.x, y: item.position.y };
+          // Fallback with offset to avoid overlap
+          pos = { 
+            x: 150 + (idx % 4) * 220, 
+            y: 200 + Math.floor(idx / 4) * 180 
+          };
         }
         
-        boxes.push({ x: pos.x - size, y: pos.y - size, width: size * 2, height: size * 2 });
+        boxes.push({ 
+          x: pos.x - size - padding / 2, 
+          y: pos.y - size - padding / 2, 
+          width: size * 2 + padding, 
+          height: size * 2 + padding + 40 // Extra for label
+        });
         
         return {
           ...item,
           position: pos,
           size,
-          path: generateIslandPath(pos.x, pos.y, size, item.id),
+          path: generateIslandPath(pos.x, pos.y, size, item.id, idx),
           shorelines: generateShorelineRings(pos.x, pos.y, size, item.id, 1),
         };
       });
@@ -177,27 +188,23 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
               <stop offset="100%" stopColor="#2d2419" stopOpacity="0.3" />
             </radialGradient>
 
-            {/* Ink hatching pattern */}
-            <pattern id="ink-hatching" x="0" y="0" width="4" height="4" patternUnits="userSpaceOnUse">
-              <line x1="0" y1="4" x2="4" y2="0" stroke="#3f3320" strokeWidth="0.5" opacity="0.3" />
+            {/* Ink hatching pattern for islands */}
+            <pattern id="ink-hatching" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse">
+              <line x1="0" y1="6" x2="6" y2="0" stroke="#3f3320" strokeWidth="0.5" opacity="0.25" />
+              <line x1="0" y1="3" x2="3" y2="0" stroke="#3f3320" strokeWidth="0.4" opacity="0.2" />
             </pattern>
 
-            {/* Water contour lines */}
-            <pattern id="water-contours" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
-              <path
-                d="M0 20 Q 25 15, 50 20 T 100 20"
-                fill="none"
-                stroke="#6b8e9d"
-                strokeWidth="0.8"
-                opacity="0.2"
-              />
-              <path
-                d="M0 40 Q 25 35, 50 40 T 100 40"
-                fill="none"
-                stroke="#6b8e9d"
-                strokeWidth="0.8"
-                opacity="0.15"
-              />
+            {/* Rich sea hatching pattern */}
+            <pattern id="sea-hatching" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+              {/* Horizontal lines */}
+              <line x1="0" y1="5" x2="20" y2="5" stroke="#6b8e9d" strokeWidth="0.6" opacity="0.15" />
+              <line x1="0" y1="15" x2="20" y2="15" stroke="#6b8e9d" strokeWidth="0.6" opacity="0.15" />
+              {/* Diagonal cross-hatch */}
+              <line x1="0" y1="20" x2="20" y2="0" stroke="#6b8e9d" strokeWidth="0.4" opacity="0.1" />
+              <line x1="10" y1="20" x2="20" y2="10" stroke="#6b8e9d" strokeWidth="0.4" opacity="0.08" />
+              <line x1="0" y1="10" x2="10" y2="0" stroke="#6b8e9d" strokeWidth="0.4" opacity="0.08" />
+              {/* Contour curves */}
+              <path d="M0 8 Q 5 6, 10 8 T 20 8" fill="none" stroke="#6b8e9d" strokeWidth="0.5" opacity="0.12" />
             </pattern>
 
             {/* Rain pattern for stormy islands */}
@@ -290,14 +297,21 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
             </text>
           </g>
 
-          {/* Ocean with contours */}
+          {/* Ocean with rich ink hatching */}
           <rect
             x="100"
             y="150"
             width="1000"
             height="900"
-            fill="url(#water-contours)"
-            opacity="1"
+            fill="#b8d4e0"
+            opacity="0.3"
+          />
+          <rect
+            x="100"
+            y="150"
+            width="1000"
+            height="900"
+            fill="url(#sea-hatching)"
           />
 
           {/* Rhumb lines (subtle diagonal lines) */}
@@ -471,18 +485,25 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
                     {getSourceIcon(item.source)}
                   </text>
 
-                  {/* Label */}
+                  {/* Label - full text, no truncation */}
                   <text
                     x={item.position.x}
-                    y={item.position.y + item.size + 25}
+                    y={item.position.y + item.size + 28}
                     textAnchor="middle"
                     fill="#2d2419"
-                    fontSize="11"
+                    fontSize="10"
                     fontFamily="Playfair Display"
                     fontWeight="600"
                     style={{ pointerEvents: 'none' }}
                   >
-                    {item.title}
+                    {item.title.length > 25 ? (
+                      <>
+                        <tspan x={item.position.x} dy="0">{item.title.slice(0, 25)}</tspan>
+                        <tspan x={item.position.x} dy="12">{item.title.slice(25)}</tspan>
+                      </>
+                    ) : (
+                      item.title
+                    )}
                   </text>
                 </g>
               </g>
@@ -639,7 +660,7 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
               />
             </ellipse>
 
-            {/* Ship body with bob animation */}
+            {/* Detailed ship with bob animation */}
             <g style={{ pointerEvents: 'none' }}>
               <animateTransform
                 attributeName="transform"
@@ -648,29 +669,74 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
                 dur="3s"
                 repeatCount="indefinite"
               />
-              {/* Hull */}
+              {/* Hull - more detailed */}
               <path
-                d="M -20,5 Q -20,15 0,18 Q 20,15 20,5 L 15,-5 L -15,-5 Z"
+                d="M -22,5 Q -22,16 -10,19 Q 0,20 10,19 Q 22,16 22,5 L 18,-5 L 12,-7 L -12,-7 L -18,-5 Z"
                 fill="#6b4423"
                 stroke="#3f3320"
                 strokeWidth="2"
               />
-              {/* Deck */}
-              <rect x="-15" y="-8" width="30" height="3" fill="#8b7355" stroke="#3f3320" strokeWidth="1" />
-              {/* Mast */}
-              <line x1="0" y1="-8" x2="0" y2="-35" stroke="#3f3320" strokeWidth="2.5" />
-              {/* Sail */}
+              {/* Hull planking detail */}
               <path
-                d="M 0,-35 Q 15,-25 15,-10 L 0,-8 Z"
+                d="M -18,5 Q -18,12 0,14 Q 18,12 18,5"
+                fill="none"
+                stroke="#5a3318"
+                strokeWidth="1"
+                opacity="0.6"
+              />
+              <path
+                d="M -15,2 Q -15,8 0,10 Q 15,8 15,2"
+                fill="none"
+                stroke="#5a3318"
+                strokeWidth="0.8"
+                opacity="0.4"
+              />
+              {/* Deck with railing */}
+              <rect x="-18" y="-9" width="36" height="3" fill="#8b7355" stroke="#3f3320" strokeWidth="1" />
+              <line x1="-16" y1="-9" x2="-16" y2="-12" stroke="#3f3320" strokeWidth="1" />
+              <line x1="0" y1="-9" x2="0" y2="-12" stroke="#3f3320" strokeWidth="1" />
+              <line x1="16" y1="-9" x2="16" y2="-12" stroke="#3f3320" strokeWidth="1" />
+              {/* Mast with rigging */}
+              <line x1="0" y1="-9" x2="0" y2="-40" stroke="#3f3320" strokeWidth="3" />
+              <line x1="0" y1="-38" x2="-15" y2="-12" stroke="#3f3320" strokeWidth="0.8" opacity="0.5" />
+              <line x1="0" y1="-38" x2="15" y2="-12" stroke="#3f3320" strokeWidth="0.8" opacity="0.5" />
+              {/* Main sail with texture */}
+              <path
+                d="M 0,-38 Q 18,-28 18,-12 L 0,-9 Z"
                 fill="#f4efe6"
                 stroke="#3f3320"
-                strokeWidth="1.5"
+                strokeWidth="1.8"
               />
-              {/* Flag */}
               <path
-                d="M 0,-35 L 12,-32 L 0,-29"
-                fill="#d4a574"
+                d="M 0,-38 Q 15,-30 15,-15"
+                fill="none"
+                stroke="#d4c5b0"
+                strokeWidth="0.8"
               />
+              <path
+                d="M 0,-30 L 16,-22"
+                fill="none"
+                stroke="#d4c5b0"
+                strokeWidth="0.6"
+              />
+              {/* Crow's nest */}
+              <rect x="-3" y="-42" width="6" height="3" fill="#6b4423" stroke="#3f3320" strokeWidth="1" />
+              {/* Flag with detail */}
+              <path
+                d="M 0,-42 L 14,-39 L 12,-36 L 0,-38 Z"
+                fill="#c9524a"
+                stroke="#3f3320"
+                strokeWidth="0.8"
+              />
+              {/* Anchor detail on side */}
+              <g transform="translate(-18, 0)">
+                <path
+                  d="M 0,-2 L 0,4 M -2,2 L 2,2"
+                  stroke="#3f3320"
+                  strokeWidth="1"
+                  opacity="0.6"
+                />
+              </g>
             </g>
 
             <text

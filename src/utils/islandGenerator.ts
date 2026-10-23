@@ -18,17 +18,34 @@ export function generateIslandPath(
   centerX: number,
   centerY: number,
   baseRadius: number,
-  seed: string
+  seed: string,
+  variant: number = 0
 ): string {
-  const random = new Random(hashString(seed));
+  const random = new Random(hashString(seed) + variant);
   const points: { x: number; y: number }[] = [];
-  const numPoints = 16 + Math.floor(random.next() * 8);
+  
+  // Vary island shape characteristics based on variant
+  const numPoints = 12 + Math.floor(random.next() * 12);
+  const jaggedness = variant % 3 === 0 ? 0.8 : variant % 3 === 1 ? 0.5 : 0.3;
+  const roundness = 1 - jaggedness;
   
   for (let i = 0; i < numPoints; i++) {
     const angle = (i / numPoints) * Math.PI * 2;
-    const radiusVariation = 0.7 + random.next() * 0.6;
-    const noise = Math.sin(angle * 3) * 0.15 + Math.sin(angle * 5) * 0.1;
-    const r = baseRadius * (radiusVariation + noise);
+    const radiusVariation = 0.6 + random.next() * 0.7;
+    
+    // Different noise patterns for variety
+    let noise = 0;
+    if (variant % 4 === 0) {
+      noise = Math.sin(angle * 3) * 0.2 + Math.sin(angle * 7) * 0.1;
+    } else if (variant % 4 === 1) {
+      noise = Math.cos(angle * 5) * 0.15 + Math.sin(angle * 2) * 0.15;
+    } else if (variant % 4 === 2) {
+      noise = Math.sin(angle * 4) * 0.18 + Math.cos(angle * 6) * 0.08;
+    } else {
+      noise = Math.sin(angle * 2) * 0.12 + Math.sin(angle * 8) * 0.12;
+    }
+    
+    const r = baseRadius * (radiusVariation + noise * jaggedness);
     
     points.push({
       x: centerX + Math.cos(angle) * r,
@@ -36,14 +53,15 @@ export function generateIslandPath(
     });
   }
 
-  // Create smooth path using quadratic curves
+  // Create smooth path using quadratic curves with varying control points
   let path = `M ${points[0].x},${points[0].y}`;
   
   for (let i = 0; i < points.length; i++) {
     const current = points[i];
     const next = points[(i + 1) % points.length];
-    const controlX = (current.x + next.x) / 2 + (random.next() - 0.5) * baseRadius * 0.2;
-    const controlY = (current.y + next.y) / 2 + (random.next() - 0.5) * baseRadius * 0.2;
+    const controlOffset = baseRadius * 0.2 * roundness;
+    const controlX = (current.x + next.x) / 2 + (random.next() - 0.5) * controlOffset;
+    const controlY = (current.y + next.y) / 2 + (random.next() - 0.5) * controlOffset;
     
     path += ` Q ${controlX},${controlY} ${next.x},${next.y}`;
   }
@@ -145,17 +163,23 @@ export function findNonOverlappingPosition(
   existingBoxes: Box[],
   size: number,
   bounds: { width: number; height: number },
-  maxAttempts: number = 50
+  maxAttempts: number = 100,
+  padding: number = 60
 ): { x: number; y: number } | null {
   const random = new Random(Date.now());
   
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const x = size + random.next() * (bounds.width - size * 2);
-    const y = size + random.next() * (bounds.height - size * 2);
+    const x = size + padding + random.next() * (bounds.width - size * 2 - padding * 2);
+    const y = size + padding + random.next() * (bounds.height - size * 2 - padding * 2);
     
-    const newBox: Box = { x: x - size, y: y - size, width: size * 2, height: size * 2 };
+    const newBox: Box = { 
+      x: x - size - padding / 2, 
+      y: y - size - padding / 2, 
+      width: size * 2 + padding, 
+      height: size * 2 + padding 
+    };
     
-    const hasCollision = existingBoxes.some(box => checkCollision(newBox, box));
+    const hasCollision = existingBoxes.some(box => checkCollision(newBox, box, padding));
     
     if (!hasCollision) {
       return { x, y };
@@ -163,4 +187,27 @@ export function findNonOverlappingPosition(
   }
   
   return null;
+}
+
+// Generate cross-hatching for richer sea texture
+export function generateSeaHatching(
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  spacing: number = 8
+): string[] {
+  const lines: string[] = [];
+  
+  // Horizontal hatching
+  for (let yPos = y; yPos < y + height; yPos += spacing) {
+    lines.push(`M ${x},${yPos} L ${x + width},${yPos}`);
+  }
+  
+  // Diagonal hatching
+  for (let offset = -height; offset < width; offset += spacing * 2) {
+    lines.push(`M ${x + offset},${y} L ${x + offset + height},${y + height}`);
+  }
+  
+  return lines;
 }
