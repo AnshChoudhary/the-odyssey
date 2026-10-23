@@ -75,18 +75,18 @@ export function InkMarks({ count, label }: { count: number; label: string }) {
   
   return (
     <div className="ink-marks" aria-label={`${count} ${label}`}>
-      <div className="tallies">
+      <svg className="tallies" viewBox="0 0 200 30">
         {[...Array(groups)].map((_, i) => (
-          <svg key={`group-${i}`} viewBox="0 0 20 30" className="tally-group">
+          <g key={`group-${i}`} transform={`translate(${i * 24}, 0)`}>
             <line x1="3" y1="2" x2="3" y2="28" stroke="currentColor" strokeWidth="1.5" />
             <line x1="7" y1="2" x2="7" y2="28" stroke="currentColor" strokeWidth="1.5" />
             <line x1="11" y1="2" x2="11" y2="28" stroke="currentColor" strokeWidth="1.5" />
             <line x1="15" y1="2" x2="15" y2="28" stroke="currentColor" strokeWidth="1.5" />
             <line x1="1" y1="15" x2="17" y2="15" stroke="currentColor" strokeWidth="2" transform="rotate(-20 9 15)" />
-          </svg>
+          </g>
         ))}
         {[...Array(remainder)].map((_, i) => (
-          <line key={`single-${i}`} className="tally-single" x1={i * 4 + 3} y1="2" x2={i * 4 + 3} y2="28" />
+          <line key={`single-${i}`} x1={groups * 24 + i * 4 + 3} y1="2" x2={groups * 24 + i * 4 + 3} y2="28" stroke="currentColor" strokeWidth="1.5" />
         ))}
       </svg>
       <span className="tally-label">{label}</span>
