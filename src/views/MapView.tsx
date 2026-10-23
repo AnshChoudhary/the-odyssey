@@ -175,11 +175,11 @@ export default function MapView() {
     else cam.fit()
   }, [selected, week]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* Athena's gentle counsel, once */
+  /* Athena's gentle counsel, once (but not during tour) */
   useEffect(() => {
-    if (counselShown || week !== NOW_WEEK) return
+    if (counselShown || week !== NOW_WEEK || st.tour >= 0) return
     counselShown = true
-    const id = setTimeout(() => st.toast("Athena's counsel", COUNSEL[0], '🦉'), 7000)
+    const id = setTimeout(() => st.toast("Athena's counsel", COUNSEL[0], '🦉'), 9000)
     return () => clearTimeout(id)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -318,9 +318,11 @@ export default function MapView() {
           ) : (
             <motion.div key="log" className="drawer-card" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 40 }}>
               <p className="eyebrow">Voyage log · week {week}</p>
-              <div className="stats">
-                <Stat n={shipped} l="Shipped" /><Stat n={needs} l="Needs attention" tone="red" />
-                {priv ? <Stat n={sinking} l="Sinking" /> : <div className="stat lock"><b>🔒</b><small>Hidden</small></div>}
+              <div className="log-prose">
+                <p><span className="log-mark">⚓</span> <strong>{shipped}</strong> {shipped === 1 ? 'landing' : 'landings'} reached the continent this week</p>
+                {needs > 0 && <p className="warn-text"><span className="log-mark">⚠</span> <strong>{needs}</strong> {needs === 1 ? 'island needs' : 'islands need'} attention</p>}
+                {priv && sinking > 0 && <p className="muted-text"><span className="log-mark">🌊</span> <strong>{sinking}</strong> drifting into deeper waters</p>}
+                {!priv && <p className="muted-text"><span className="log-mark">🔒</span> Manager lens active · private waters hidden</p>}
               </div>
               <Log text={VOYAGE[week]} />
               <button className="btn ink primary" onClick={() => setRoute('log')}>Open the Captain's Log →</button>

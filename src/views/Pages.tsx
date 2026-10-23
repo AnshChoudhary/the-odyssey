@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { CHAPTERS, CREW, GIFTS, GOALS, PORTS, STUCK, SUGGESTIONS, TEAMS } from '../data'
 import { useStore } from '../store'
 import { roman } from '../lib'
+import { JourneyStage, VoyagePath } from '../components/QualitativeIndicators'
 
 const rise = (i: number) => ({ initial: { opacity: 0, y: 40 }, animate: { opacity: 1, y: 0 }, transition: { delay: .12 + i * .08, type: 'spring' as const, stiffness: 140, damping: 20 } })
 
@@ -26,18 +27,27 @@ export function IthacaView() {
         <section key={grp} className="goal-group"><h3 className="eyebrow">{grp}</h3>
           <div className="goal-grid">{GOALS.filter((g) => g.grp === grp).map((g, i) => (
             <motion.article key={g.id} className="goal glass" {...rise(gi * 2 + i)} whileHover={{ y: -4 }}>
-              <Ring p={g.p} /><div><h2>{g.t}</h2>
-                <div className="route-bar"><motion.i initial={{ width: 0 }} animate={{ width: `${g.p * 100}%` }} transition={{ delay: .6 + i * .1, duration: 1.4, ease: [.22, 1, .36, 1] }} /><span style={{ left: `${g.p * 100}%` }}>⛵</span><em>⭐</em></div>
-                <p className="coach"><span>🦉</span>{g.coach}</p></div>
+              <JourneyStage progress={g.p} />
+              <div>
+                <h2>{g.t}</h2>
+                <VoyagePath progress={g.p} />
+                <p className="coach"><OwlIcon />{g.coach}</p>
+              </div>
             </motion.article>))}</div>
         </section>))}
     </Page>
   )
 }
-function Ring({ p }: { p: number }) {
-  const R = 34, C = 2 * Math.PI * R
-  return <svg className="ring" viewBox="0 0 80 80"><circle cx="40" cy="40" r={R} fill="none" stroke="rgba(255,255,255,.12)" strokeWidth="6" /><motion.circle cx="40" cy="40" r={R} fill="none" stroke="#f4d588" strokeWidth="6" strokeLinecap="round" strokeDasharray={C} initial={{ strokeDashoffset: C }} animate={{ strokeDashoffset: C * (1 - p) }} transition={{ duration: 1.6, ease: [.22, 1, .36, 1], delay: .4 }} transform="rotate(-90 40 40)" /><text x="40" y="46" textAnchor="middle" fill="#fbf3dc" fontFamily="Cormorant Garamond" fontSize="20">{Math.round(p * 100)}%</text></svg>
-}
+
+const OwlIcon = () => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ flexShrink: 0 }}>
+    <circle cx="12" cy="10" r="8" />
+    <circle cx="9" cy="9" r="2" fill="currentColor" />
+    <circle cx="15" cy="9" r="2" fill="currentColor" />
+    <path d="M7 6 L5 3 M17 6 L19 3" strokeLinecap="round" />
+    <path d="M10 13 Q12 15 14 13" strokeLinecap="round" />
+  </svg>
+)
 
 /* ------------------------------------------------------------ Calypso */
 export function CalypsoView() {
@@ -45,7 +55,30 @@ export function CalypsoView() {
   const [gone, setGone] = useState<string[]>([]); const [open, setOpen] = useState<{ id: string; mode: 'sail' | 'crew' } | null>(null); const [step, setStep] = useState('')
   return (
     <Page theme="theme-dusk calypso" eyebrow="Projects stuck too long" title="Calypso's Island" sub="Nothing is wrong with you. Some voyages stall. Decide gently what each one deserves.">
-      <div className="palm" aria-hidden="true">🌴</div>
+      <svg className="palm-tree" viewBox="0 0 200 300" aria-hidden="true">
+        <defs>
+          <linearGradient id="trunk-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#8a5a3a" />
+            <stop offset="100%" stopColor="#5a3a2a" />
+          </linearGradient>
+        </defs>
+        <ellipse cx="100" cy="280" rx="40" ry="8" fill="#000" opacity="0.3" />
+        <path d="M85 260 Q88 200 90 140 Q92 80 95 40 L105 40 Q108 80 110 140 Q112 200 115 260 Z" 
+          fill="url(#trunk-grad)" stroke="#3a2a1a" strokeWidth="2" />
+        <g transform="translate(100, 50)">
+          {[0, 45, 90, 135, 180, 225, 270, 315].map((angle, i) => (
+            <path 
+              key={i}
+              d="M0 0 Q-20 -10 -35 -8 Q-50 -6 -60 0 Q-55 -2 -45 -4 Q-30 -6 -15 -3 Z"
+              fill="#4a6a3a"
+              stroke="#2a3a1a"
+              strokeWidth="1.5"
+              transform={`rotate(${angle}) scale(${0.9 + i * 0.05})`}
+              opacity={0.85}
+            />
+          ))}
+        </g>
+      </svg>
       <div className="stuck-grid"><AnimatePresence>{STUCK.filter((s) => !gone.includes(s.id)).map((s, i) => (
         <motion.article key={s.id} layout className="stuck glass" {...rise(i)} exit={{ opacity: 0, y: 160, rotate: 18, scale: .8, transition: { duration: .9 } }}>
           <div className="sand" aria-hidden="true"><i style={{ height: `${Math.min(100, s.days * 1.6)}%` }} /></div>
@@ -113,7 +146,7 @@ export function ArmadaView() {
               <svg viewBox="0 0 90 90"><g style={{ transform: `translateY(${(s.load - .5) * 14}px)` }}><path d="M8 54 L82 54 L72 70 Q45 76 18 70Z" fill="#8a5a2c" stroke="#2a1a0c" strokeWidth="2" /><path d="M45 54 V12" stroke="#2a1a0c" strokeWidth="2" /><path d="M47 14 Q74 28 68 50 H47Z" fill="#f4e8c8" stroke="#2a1a0c" strokeWidth="1.6" /><path d="M43 20 Q26 32 30 50 H43Z" fill="#e6d4a6" stroke="#2a1a0c" strokeWidth="1.6" />
                 {s.load >= .95 && <g fill="#c79a5a" stroke="#2a1a0c"><rect x="14" y="46" width="12" height="8" /><rect x="58" y="46" width="12" height="8" /></g>}</g></svg>
               {s.alone && <i className="lone" aria-label="Sailing alone" />}
-              <b>{s.n}</b><small>{s.out} outcomes</small>
+              <b>{s.n}</b>
               <div className="tip">{s.alone ? 'Sailing alone: few shared islands.' : s.load >= .95 ? 'Heavy cargo: carrying more than usual.' : 'Steady sailing.'}</div>
             </div>))}</div>
         </motion.section>))}
