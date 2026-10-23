@@ -133,7 +133,7 @@ export function TheChart({ onNavigateToShip }: ChartProps) {
   };
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-[#e8dcc7]">
+    <div data-testid="the-chart" className="relative w-full h-screen overflow-hidden bg-[#e8dcc7]">
       {/* Hint text */}
       <AnimatePresence>
         {showHint && (

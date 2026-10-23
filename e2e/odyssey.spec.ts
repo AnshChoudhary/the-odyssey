@@ -110,7 +110,7 @@ test.describe('The Work Odyssey', () => {
     await page.keyboard.press('Escape');
     
     // Should return to chart
-    await expect(page.locator('text=Your living map of work')).toBeVisible();
+    await expect(page.getByTestId('the-chart')).toBeVisible();
   });
 
   test('should show legend when help button is clicked', async ({ page }) => {
@@ -186,15 +186,15 @@ test.describe('The Work Odyssey', () => {
     await page.getByRole('button', { name: 'Board the Ship' }).click();
     await expect(page.locator('text=stalwart crew')).toBeVisible();
     
-    // Wait for first crew member to be visible
+    // Wait for first crew member to be visible (with extra timeout for animations)
     const crewMember = page.locator('[data-testid^="crew-"]').first();
-    await expect(crewMember).toBeVisible();
+    await expect(crewMember).toBeVisible({ timeout: 10000 });
     
     // Click crew member
     await crewMember.click();
     
     // Detail panel should appear with bond strength
-    await expect(page.locator('text=Bond Strength')).toBeVisible();
+    await expect(page.locator('text=Bond Strength')).toBeVisible({ timeout: 10000 });
     
     // Close panel
     await page.locator('button:has-text("×")').first().click();
