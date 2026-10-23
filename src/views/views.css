@@ -66,26 +66,34 @@
 @keyframes sun { to { transform: translateY(-16px) scale(1.05); } }
 .deck-clouds i { position: absolute; left: -30%; top: 18%; width: 34%; height: 90px; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 220, 190, .5), transparent); filter: blur(10px); animation: cloud 70s linear infinite; }
 .deck-clouds i:nth-child(2) { top: 32%; animation-duration: 100s; animation-delay: -50s; } .deck-clouds i:nth-child(3) { top: 10%; animation-duration: 130s; animation-delay: -90s; }
-.deck-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.deck-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.deck-svg * { pointer-events: auto; }
 .deck .back { position: absolute; top: 80px; left: calc(var(--rail-w) + 36px); z-index: 4; }
 .deck-title { position: absolute; top: 76px; left: 0; right: 0; text-align: center; pointer-events: none; z-index: 3; } .deck-title h1 { font-size: clamp(44px, 6vw, 84px); letter-spacing: .06em; text-shadow: 0 6px 40px rgba(0, 0, 0, .35); }
-.deck-svg text { font-family: var(--hand); }
-.hand-w { fill: #fbeccd; font-size: 24px; opacity: .85; } .hand-w.sm { font-size: 19px; }
-.crew-n { font-size: 26px; fill: #fff3d4; stroke: #3b2a1a; stroke-width: 5px; paint-order: stroke; font-weight: 600; } .crew-r { font-family: var(--display) !important; font-style: italic; font-size: 17px; fill: #fff3d4; stroke: #3b2a1a; stroke-width: 4px; paint-order: stroke; }
-.crate-t { font-family: var(--ui) !important; font-weight: 700; font-size: 16px; fill: #3b2a1a; }
-.sailor { cursor: pointer; outline: none; } .sailor-body { transform-box: fill-box; transform-origin: 50% 100%; animation: idle 3.6s ease-in-out infinite; } @keyframes idle { 50% { transform: translateY(-4px) rotate(1.6deg); } }
-.sailor:hover .sailor-body, .sailor.sel .sailor-body { animation-duration: .9s; filter: drop-shadow(0 0 14px rgba(255, 220, 140, .9)); } .sailor:focus-visible .crew-n { fill: #ffd98c; }
-.ship-deck { animation: ship-rock 6s ease-in-out infinite; transform-origin: 800px 700px; } @keyframes ship-rock { 50% { transform: translateY(8px) rotate(.7deg); } }
-.dsail { transform-box: fill-box; transform-origin: 50% 0; animation: flutter 4s ease-in-out infinite; }
-.waves.front { animation: wv-slide 7s linear infinite; } .waves.front .w2 { animation: wv-slide2 5s linear infinite; } .waves.back { animation: wv-slide 12s linear infinite; }
-@keyframes wv-slide { to { transform: translateX(-200px); } } @keyframes wv-slide2 { from { transform: translateX(-200px); } to { transform: none; } }
-.far { animation: bob 6s ease-in-out infinite; }
+.hand-w { fill: #fbeccd; font-size: 24px; opacity: .85; font-family: var(--hand); } .hand-w.sm { font-size: 19px; }
+.crate-label { font-family: var(--ui); font-weight: 700; font-size: 16px; }
+.crew-figure { cursor: pointer; outline: none; }
+.crew-body { transform-box: fill-box; transform-origin: 50% 100%; animation: idle 3.8s ease-in-out infinite; }
+@keyframes idle { 50% { transform: translateY(-5px) rotate(1.8deg); } }
+.crew-figure:hover .crew-body, .crew-figure.sel .crew-body { animation-duration: 1s; filter: drop-shadow(0 0 16px rgba(255, 220, 140, .85)); }
+.crew-figure:focus-visible .crew-name { fill: #ffd98c; }
+.galley-body { animation: ship-rock 7s ease-in-out infinite; transform-origin: 800px 720px; }
+@keyframes ship-rock { 50% { transform: translateY(10px) rotate(.8deg); } }
+.sail-main, .sail-fore { transform-box: fill-box; transform-origin: 50% 0; animation: flutter 4.5s ease-in-out infinite; }
+.sail-fore { animation-delay: -1.8s; }
+@keyframes flutter { 50% { transform: scaleX(.94) skewY(2.5deg); } }
+.waves.front { animation: wv-slide 8s linear infinite; }
+.foam-wave { animation: wv-slide2 6s linear infinite; }
+.waves.back { animation: wv-slide 14s linear infinite; }
+@keyframes wv-slide { to { transform: translateX(-200px); } }
+@keyframes wv-slide2 { from { transform: translateX(-200px); } to { transform: none; } }
+.far-fleet { animation: bob 7s ease-in-out infinite; }
 .crew-card { position: absolute; z-index: 6; right: 24px; top: 96px; width: 340px; border-radius: 22px; padding: 24px; background: linear-gradient(165deg, rgba(246, 232, 192, .98), rgba(226, 200, 143, .97)); color: var(--brown); box-shadow: 0 30px 80px -20px #000; }
 .crew-card .eyebrow { color: var(--red); } .crew-card h2 { font-size: 40px; } .crew-card .x { position: absolute; right: 16px; top: 12px; font-size: 26px; opacity: .5; } .crew-card .x:hover { opacity: 1; }
 .bond { display: flex; align-items: center; gap: 4px; margin: 10px 0; } .bond span { font-size: 22px; opacity: .22; filter: grayscale(1); } .bond span.on { opacity: 1; filter: none; } .bond small { margin-left: 8px; opacity: .6; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
 .crew-card .why { font-family: var(--display); font-size: 18px; font-style: italic; margin: 0 0 14px; } .crew-card h3 { font-size: 13px; font-family: var(--caps); letter-spacing: .2em; text-transform: uppercase; opacity: .7; margin-bottom: 8px; }
 .crew-card ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; } .crew-card li { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; font-size: 13px; } .crew-card li em { opacity: .55; font-style: normal; font-size: 11.5px; }
-@media (max-width: 900px) { .crew-card { left: 12px; right: 12px; width: auto; bottom: 84px; } .deck .back { top: 70px; left: 12px; } .deck-title { display: none; } }
+@media (max-width: 900px) { .crew-card { left: 12px; right: 12px; width: auto; bottom: 84px; top: auto; } .deck .back { top: 70px; left: 12px; } .deck-title { display: none; } }
 
 /* ================= RITUALS ================= */
 .theme-desk { background: radial-gradient(900px 600px at 50% 20%, #3a2a1e, transparent 70%), linear-gradient(#150f0a, #261a10); }
