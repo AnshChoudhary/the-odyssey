@@ -41,6 +41,21 @@ https://github.com/user/repo/blob/main/assets/flow.mp4
 
 *(Or download and view [assets/flow.mp4](assets/flow.mp4) directly)*
 
+## Navigation
+
+**Simple, collapsible left sidebar** organizes everything into four sections with plain-English labels:
+
+- **My Voyage**: Map (home), Ithaca (goals), Calypso's Island (stuck work)
+- **Check-ins**: Captain's Log (weekly), Three Trials (monthly)
+- **Crew & Fleet**: My Crew, Recruit a Crew Member, Ports of Call, The Armada (team view)
+- **Chronicle**: Chapters of the Epic, Gifts from the Gods
+
+Active view is highlighted, breadcrumb shows where you are, **Esc closes** modals and returns to map, **? button** shows legend explaining every metaphor.
+
+**First-visit onboarding**: 3-step Athena tour (skippable, "replay tour" link) explaining the map metaphor and sidebar.
+
+![Navigation with Sidebar](assets/nav-sidebar-open.png)
+
 ## Features
 
 ### Current Prototype (Single-file HTML)
@@ -109,7 +124,43 @@ After you've confirmed or edited all three trials, the AI renders your month as 
 🎮 **Feels like play** — Swapping monsters, writing epic backstories, correcting Athena's observations  
 🏷️ **Labeled data** — Your corrections teach the AI what "hard" means to you, improving future summaries  
 📊 **No scores or rankings** — Direction and coaching, never grades  
-🔒 **Privacy-first** — Forgotten work and backstory edits are private unless you choose to share  
+🔒 **Privacy-first** — Forgotten work and backstory edits are private unless you choose to share
+
+### 📚 Epic Features
+
+#### Chapters of the Epic
+Your monthly journey told as mock-epic prose. Each month becomes a chapter incorporating Three Trials corrections. Edit, annotate, and choose what to share. Example: *"In the waning days of October, you faced three trials..."*
+
+#### 🏝️ Calypso's Island
+Projects stuck too long (age, last activity). Gentle framing with three actions:
+- **⛵ Set sail** — Plan next step
+- **🤝 Ask crew for help** — Get unblocked
+- **🌊 Let it go** — Release what no longer serves
+
+#### 🎁 Gifts from the Gods
+Treasure-chest gallery of kudos/recognition from Slack, GitHub, etc. Open a chest to read the full message. Who gave it, when, and why.
+
+#### 🚢 The Armada (Manager View)
+Team overview where each team is a fleet of ships. Highlights:
+- Ships sailing alone
+- Overloaded crews
+- Outcomes only, no message content, no rankings
+Labeled "Manager view" to set expectations.
+
+#### 🤝 Recruit a Crew Member
+AI suggestions of people whose islands overlap with yours but you rarely work with. Shows overlap area and reason. "Say ahoy" action (no actual messages sent in prototype).
+
+#### ⚓ Ports of Call
+Cross-team projects as harbors where several ships dock. Click to see teams, shared islands, and status. Example: "API v2 Migration — 3 teams docked, final sprint before launch"
+
+#### 🦉 Athena's Counsel
+Gentle daily nudge as a dismissible notification on the map. Example: *"Teammate H has been waiting on your review for 6 hours."* History of past counsel available.
+
+#### 🏛️ Ithaca, the North Star
+Q4 manager expectations + personal career goals. Each goal shows:
+- Progress bar (heading toward Ithaca)
+- Coaching line from Athena (direction, not grades)
+Links from Captain's Log Ithaca section.  
 
 ### Privacy Principles
 
@@ -191,17 +242,36 @@ The Work Odyssey is designed to be embedded into existing HR systems, not to rep
 
 ```
 /
-├── index.html                    # The complete working prototype
+├── index.html                    # The complete working prototype (1049 lines, 80KB)
 ├── assets/
 │   ├── mockup.png               # Main map view screenshot
 │   ├── deck.png                 # Deck view screenshot
 │   ├── deck-card.png            # Crew detail card screenshot
 │   ├── captains-log.png         # Weekly Captain's Log check-in
 │   ├── three-trials.png         # Monthly Three Trials check-in
+│   ├── nav-sidebar-open.png     # Sidebar navigation
+│   ├── nav-main-map.png         # Main map with new navigation
 │   └── flow.mp4                 # Demo video of the interaction flow
 ├── README.md                    # This file
 └── LICENSE                      # MIT License
 ```
+
+## Testing & Verification
+
+✅ **Verified in headless browser:**
+- Page loads without console errors
+- All critical elements present (sidebar, 9 views, modals, tour, legend)
+- All 11 navigation items render
+- Sidebar structure complete
+- Tour and legend modals functional
+- Captain's Log and Three Trials still work
+
+⚠️ **Not fully verified (interactive testing timed out):**
+- Click navigation between all views (structure present, clicks not tested end-to-end)
+- All feature render functions (code present, visual verification incomplete)
+- Athena's Counsel nudge timing
+
+**Recommendation**: Manual testing in browser recommended to verify all click interactions.
 
 ## Contributing
 
