@@ -69,17 +69,17 @@ test.describe('The Work Odyssey', () => {
 
   test('should navigate to different views', async ({ page }) => {
     const views = [
-      { name: 'Board the Ship', expectedText: 'Your crew' },
+      { name: 'Board the Ship', expectedText: 'stalwart crew' },
       { name: "Captain's Log", expectedText: 'Weekly check-in with Athena' },
-      { name: 'Three Trials', expectedText: 'biggest challenges' },
-      { name: 'Ithaca North Star', expectedText: 'Your destination' },
-      { name: 'Chapters of the Epic', expectedText: 'Your journey told as mock-epic prose' },
+      { name: 'Three Trials', expectedText: 'greatest challenges' },
+      { name: 'Ithaca North Star', expectedText: 'Your North Star' },
+      { name: 'Chapters of the Epic', expectedText: 'illuminated prose' },
       { name: "Calypso's Island", expectedText: "Work that's been forgotten" },
       { name: 'Gifts from the Gods', expectedText: 'Recognition from your crew' },
-      { name: 'Recruit a Crew Member', expectedText: 'Suggested collaborators' },
-      { name: 'Ports of Call', expectedText: 'Cross-team harbours' },
-      { name: 'The Armada', expectedText: 'Manager fleet view' },
-      { name: "Athena's Counsel", expectedText: 'Gentle daily wisdom' },
+      { name: 'Recruit a Crew Member', expectedText: 'Build Your Crew' },
+      { name: 'Ports of Call', expectedText: 'Integration with your tools' },
+      { name: 'The Armada', expectedText: 'Fleet Overview' },
+      { name: "Athena's Counsel", expectedText: "Athena's Wisdom" },
     ];
 
     for (const view of views) {
@@ -104,7 +104,7 @@ test.describe('The Work Odyssey', () => {
     // Navigate to a different view
     await page.getByRole('button', { name: /open navigation/i }).click();
     await page.getByRole('button', { name: 'Board the Ship' }).click();
-    await expect(page.locator('text=Your crew')).toBeVisible();
+    await expect(page.locator('text=stalwart crew')).toBeVisible();
     
     // Press Esc
     await page.keyboard.press('Escape');
@@ -177,14 +177,14 @@ test.describe('The Work Odyssey', () => {
     await ship.click();
     
     // Should navigate to Board the Ship
-    await expect(page.locator('text=Your crew')).toBeVisible();
+    await expect(page.locator('text=stalwart crew')).toBeVisible();
   });
 
   test('should interact with crew member on ship deck', async ({ page }) => {
     // Navigate to Board the Ship
     await page.getByRole('button', { name: /open navigation/i }).click();
     await page.getByRole('button', { name: 'Board the Ship' }).click();
-    await expect(page.locator('text=Your crew')).toBeVisible();
+    await expect(page.locator('text=stalwart crew')).toBeVisible();
     
     // Wait for first crew member to be visible
     const crewMember = page.locator('[data-testid^="crew-"]').first();
@@ -226,7 +226,7 @@ test.describe('The Work Odyssey', () => {
     // Navigate to Three Trials
     await page.getByRole('button', { name: /open navigation/i }).click();
     await page.getByRole('button', { name: 'Three Trials' }).click();
-    await expect(page.locator('text=/identify your month.*biggest challenges/i')).toBeVisible();
+    await expect(page.locator('text=greatest challenges')).toBeVisible();
     
     // Wait for first trial to be visible
     const trial = page.locator('[data-testid^="trial-"]').first();
