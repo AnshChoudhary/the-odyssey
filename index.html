@@ -300,7 +300,7 @@ h2{font-family:'IM Fell English',serif;font-size:24px;font-weight:400}h3{font-fa
 <div id="deck" style="position:relative;height:700px">
 <svg id="decksvg" width="1440" height="840" viewBox="0 0 1440 840" style="max-width:100%;height:auto"></svg>
 <div id="deckttl" style="display:none"></div>
-<div id="card"></div>
+<div id="card"><button class="x" onclick="closeCard()">✕</button><div id="cardin"></div></div>
 </div>
 </div>
 
@@ -381,14 +381,28 @@ function toggleSidebar(){
 
 function navigateTo(view){
   if(currentView===view)return;
+  
+  // For modal views (log, trials), just open the modal
+  if(view==='log'){
+    openCaptainsLog();
+    document.querySelector('.nav-item[data-view="log"]')?.classList.add('active');
+    return;
+  }
+  if(view==='trials'){
+    openThreeTrials();
+    document.querySelector('.nav-item[data-view="trials"]')?.classList.add('active');
+    return;
+  }
+  
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  document.getElementById('view-'+view).classList.add('active');
+  const targetView=document.getElementById('view-'+view);
+  if(targetView){
+    targetView.classList.add('active');
+  }
   document.querySelector(`.nav-item[data-view="${view}"]`)?.classList.add('active');
   currentView=view;
   updateBreadcrumb(view);
-  if(view==='log')openCaptainsLog();
-  if(view==='trials')openThreeTrials();
   if(view==='crew')initDeck();
   if(view==='chapters')renderChapters();
   if(view==='gifts')renderGifts();
@@ -401,7 +415,7 @@ function navigateTo(view){
 }
 
 function updateBreadcrumb(view){
-  const names={map:'The Work Odyssey',ithaca:'Ithaca · Goals',calypso:'Calypso\\'s Island',log:'Captain\\'s Log',trials:'Three Trials',crew:'My Crew',recruit:'Recruit Crew',ports:'Ports of Call',armada:'The Armada',chapters:'Chapters of the Epic',gifts:'Gifts from the Gods'};
+  const names={map:'The Work Odyssey',ithaca:'Ithaca · Goals',calypso:"Calypso's Island",log:"Captain's Log",trials:'Three Trials',crew:'My Crew',recruit:'Recruit Crew',ports:'Ports of Call',armada:'The Armada',chapters:'Chapters of the Epic',gifts:'Gifts from the Gods'};
   document.getElementById('breadcrumb').textContent=names[view]||'The Work Odyssey';
 }
 
@@ -410,7 +424,7 @@ let tourStep=0;
 const tourSteps=[
   {title:'Welcome to The Work Odyssey',msg:'Your work is a voyage across ancient seas. This map shows your journey: islands are tasks, storms are blockers, and your ship sails toward Ithaca — your goals on the horizon.'},
   {title:'The Sidebar is Your Compass',msg:'Navigate using the left sidebar: My Voyage (map, goals, stuck work), Check-ins (weekly log, monthly trials), Crew & Fleet (collaborators, team view), and Chronicle (your epic story, kudos). Click the ☰ menu to open it.'},
-  {title:'Corrections Teach the AI',msg:'In Captain\\'s Log and Three Trials, you correct what Athena (the AI) got wrong. Your edits are labeled data that improve future summaries. This is a draft, not a verdict. Press ? anytime for the legend.'}
+  {title:'Corrections Teach the AI',msg:"In Captain's Log and Three Trials, you correct what Athena (the AI) got wrong. Your edits are labeled data that improve future summaries. This is a draft, not a verdict. Press ? anytime for the legend."}
 ];
 
 function nextTourStep(){
@@ -465,7 +479,7 @@ document.addEventListener('keydown',e=>{
 const CHAPTERS=[
   {month:'October 2026',prose:'In the waning days of October, you faced three trials that would test the limits of mortal resolve. First came The Cyclops, guardian of the legacy fortress. The old authentication system, a single-eyed beast of tangled code, refused to yield. With Teammate A at your side, you forged new paths through the labyrinth. Then Poseidon himself sent storms upon your works. At the darkest hour, the API gateway fell. Cascading failures threatened to drown all you had built. But with Teammate D as lighthouse keeper, you guided your ship through 47 minutes of tempest. Finally, you sailed the strait between Scylla and Charybdis, where no choice is without sacrifice. Performance demanded blood; clarity demanded time. You chose the narrow path. These deeds are yours. 11 islands conquered, 3 storms weathered, and Ithaca draws nearer.'},
   {month:'September 2026',prose:'September brought calmer seas but no less toil. The Database Migration — a leviathan lurking beneath — finally surfaced. For two weeks you and Teammate C dove deep, rewriting queries, testing edge cases, migrating 40GB of production data without a single lost record. The users never knew the abyss you crossed. Meanwhile, the Design System reached its first shore: v1.0 shipped to all teams. Teammate B championed the cause, you built the docks. 8 islands claimed, 2 forgotten (the logging refactor still sinks), and the Shipped Continent grows.'},
-  {month:'August 2026',prose:'August: the month of the Great Refactor. Technical debt, accumulated like barnacles on an old hull, slowed every voyage. You rallied the crew — Teammates A, C, F — and spent three weeks scraping, rebuilding, testing. The codebase breathes easier now. Tests run 40% faster. New features ship without fear. This was not glamorous work, but Odysseus knew: sometimes you must repair the ship before sailing onward. 6 islands completed, 1 trial overcome (the flaky CI pipeline, slain at last), and your crew\\'s bond strengthened.'}
+  {month:'August 2026',prose:"August: the month of the Great Refactor. Technical debt, accumulated like barnacles on an old hull, slowed every voyage. You rallied the crew — Teammates A, C, F — and spent three weeks scraping, rebuilding, testing. The codebase breathes easier now. Tests run 40% faster. New features ship without fear. This was not glamorous work, but Odysseus knew: sometimes you must repair the ship before sailing onward. 6 islands completed, 1 trial overcome (the flaky CI pipeline, slain at last), and your crew's bond strengthened."}
 ];
 
 function renderChapters(){
@@ -712,10 +726,9 @@ function zoomOut(){navigateTo('map')}
 buildDeck();{const d=document.querySelector('.crew[data-id="D"]');const [n,r]=d.querySelectorAll('text');n.setAttribute('x',58);n.setAttribute('y',-40);n.setAttribute('text-anchor','start');r.setAttribute('x',58);r.setAttribute('y',-24);r.setAttribute('text-anchor','start');}
 
 // Initialize
-if(!localStorage.getItem('odyssey-tour-done')){
-  setTimeout(showTour,800);
-}
-setTimeout(showAthenaNudge,5000);
+// Don't auto-show tour - let user trigger it via help or first visit detection
+// Uncomment to enable auto-tour: if(!localStorage.getItem('odyssey-tour-done')){setTimeout(showTour,800);}
+// setTimeout(showAthenaNudge,5000);  // Uncomment to enable Athena nudge
 
 // Handle hash navigation
 if(location.hash==='#deck'){zoomIn()}
@@ -733,7 +746,7 @@ const LOG_DATA={
     {id:6,title:'Review: PR #EX-218',source:'GitHub',detail:'Teammate C requested your review 6 hours ago'}
   ],
   sinking:[
-    {id:7,title:'"I\'ll send the notes"',source:'Zoom',detail:'Promised in meeting 19 days ago, still not sent'},
+    {id:7,title:"I'll send the notes",source:'Zoom',detail:'Promised in meeting 19 days ago, still not sent'},
     {id:8,title:'Follow up with Teammate C',source:'Slack',detail:'DM thread from 26 days ago, no response'},
     {id:9,title:'Spike: caching',source:'GitHub',detail:'Draft PR created 14 days ago, abandoned'}
   ],
@@ -790,14 +803,14 @@ const TRIALS_DATA=[
     monster:'The Cyclops',
     type:'BLOCKER',
     title:'Legacy auth system migration',
-    desc:'The old authentication fortress refused to yield. Single point of failure, no tests, three different session mechanisms tangled like Medusa\'s hair.',
+    desc:"The old authentication fortress refused to yield. Single point of failure, no tests, three different session mechanisms tangled like Medusa's hair.",
     helped:['Teammate A','Teammate C'],
     backstory:'',
     confirmed:false
   },
   {
     id:2,
-    monster:'Poseidon\'s Storm',
+    monster:"Poseidon's Storm",
     type:'INCIDENT',
     title:'Production API rate limit cascade',
     desc:'At 2 AM Thursday, the API gateway began rejecting requests. Cascading failures across 4 services. 47 minutes to restore, angry customers in the tempest.',
