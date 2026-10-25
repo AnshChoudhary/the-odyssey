@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { CREW, CrewId } from '../data'
 import { useStore } from '../store'
+import { Profile } from './DeckProfile'
 
 const NS = { vectorEffect: 'non-scaling-stroke' } as const
 const ease = [.22, 1, .36, 1] as const
@@ -22,6 +23,7 @@ export default function DeckView() {
   const { setRoute, week } = useStore()
   const [sel, setSel] = useState<CrewId | null>(null)
   const [hov, setHov] = useState<CrewId | null>(null)
+  const [sheet, setSheet] = useState<'profile' | 'plan'>('profile')
   const c = sel ? CREW[sel] : null
   const ids = Object.keys(CREW) as CrewId[]
   const lit = hov ?? sel
@@ -29,87 +31,18 @@ export default function DeckView() {
     <div className="view deck">
       <div className="deck-grid" aria-hidden="true" />
       <header className="deck-head">
-        <motion.p className="eyebrow" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: .3 }}><i />Plan of the deck · W{week}</motion.p>
+        <motion.p className="eyebrow" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: .3 }}><i />{sheet === 'profile' ? 'Inboard profile' : 'Plan of the deck'} · W{week}</motion.p>
         <h1><span className="mask"><motion.span initial={{ y: '105%' }} animate={{ y: 0 }} transition={{ duration: 1.2, ease, delay: .2 }}>The <em>Deck</em></motion.span></span></h1>
-        <motion.p className="lede" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .7, duration: 1, ease }}>The six people you sail with most, placed where they work. Line weight is how much you work together.</motion.p>
+        <motion.div className="sheets mono" role="tablist" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}>
+          {(['profile', 'plan'] as const).map((k, i) => <button key={k} role="tab" aria-selected={sheet === k} className={sheet === k ? 'on' : ''} onClick={() => setSheet(k)} data-cursor={k === 'profile' ? 'Profile' : 'Plan'}>Sheet {i ? 'II' : 'I'} · {k === 'profile' ? 'Profile' : 'Plan'}</button>)}
+        </motion.div>
       </header>
 
-      <div className="deck-stage">
-        <svg viewBox="200 214 1340 506" preserveAspectRatio="xMidYMid meet" onClick={(e) => { if (e.target === e.currentTarget) setSel(null) }}>
-          <defs><clipPath id="hullclip"><path d={DECK} /></clipPath></defs>
-          {/* dimension lines */}
-          <g className="dims" stroke="var(--bone)" strokeWidth=".6" opacity=".45">
-            <path d="M300 250 H1384 M300 242 V258 M1384 242 V258" {...NS} />
-            <path d="M246 362 V538 M238 362 H254 M238 538 H254" {...NS} />
-          </g>
-          <text x="842" y="240" textAnchor="middle" className="micro">Length over all · six stations</text>
-          <text x="232" y="450" textAnchor="middle" className="micro" transform="rotate(-90 232 450)">Beam</text>
-
-          {/* the hull */}
-          <Draw d={HULL} w={1.2} />
-          <Draw d={DECK} w={.6} o={.6} delay={.3} />
-          <g clipPath="url(#hullclip)" opacity=".22">{[392, 414, 436, 464, 486, 508].map((y) => <path key={y} d={`M300 ${y} H1400`} stroke="var(--bone)" strokeWidth=".5" {...NS} />)}</g>
-          <path d="M282 450 H1500" stroke="var(--bone)" strokeWidth=".6" strokeDasharray="18 4 2 4" opacity=".4" {...NS} />
-          <text x="1508" y="454" className="micro">CL</text>
-          <Draw d="M1384 450 L1478 450" w={1} delay={.6} />
-          {/* stern cabin, helm, masts, hold */}
-          <rect x="318" y="398" width="76" height="104" fill="none" stroke="var(--bone)" strokeWidth=".6" strokeDasharray="3 3" opacity=".5" {...NS} />
-          <g transform={`translate(${YOU.x},${YOU.y})`} opacity=".7">{[0, 45, 90, 135].map((a) => <path key={a} d="M-20 0 H20" stroke="var(--bone)" strokeWidth=".6" transform={`rotate(${a})`} {...NS} />)}<circle r="15" fill="none" stroke="var(--bone)" strokeWidth=".6" {...NS} /></g>
-          {[[640, 17], [980, 15]].map(([x, r]) => <g key={x}>
-            <path d={`M${x} 332 V568`} stroke="var(--bone)" strokeWidth=".6" strokeDasharray="6 4" opacity=".4" {...NS} />
-            <circle cx={x} cy="450" r={r} fill="var(--ink)" stroke="var(--bone)" strokeWidth=".9" {...NS} /><circle cx={x} cy="450" r={r * .45} fill="none" stroke="var(--bone)" strokeWidth=".6" {...NS} />
-          </g>)}
-          <g opacity=".6"><rect x="764" y="420" width="92" height="60" fill="none" stroke="var(--bone)" strokeWidth=".7" {...NS} /><path d="M764 420 L856 480 M856 420 L764 480" stroke="var(--bone)" strokeWidth=".5" {...NS} /></g>
-          <text x="810" y="500" textAnchor="middle" className="micro">Hold</text>
-          <text x="640" y="590" textAnchor="middle" className="micro">Main mast</text>
-          <text x="980" y="590" textAnchor="middle" className="micro">Fore mast</text>
-
-          {/* bonds */}
-          {ids.map((id, i) => {
-            const p = POS[id], b = CREW[id].bond, mx = (YOU.x + p.x) / 2, my = (YOU.y + p.y) / 2 + (p.y < YOU.y ? -40 : p.y > YOU.y ? 40 : (i % 2 ? 46 : -46))
-            const on = lit === id
-            return <motion.path key={id} d={`M${YOU.x} ${YOU.y} Q${mx} ${my} ${p.x} ${p.y}`} fill="none" className={`bond-line${on ? ' on' : ''}`}
-              stroke={on ? 'var(--signal)' : 'var(--bone)'} strokeWidth={.5 + b * .45} {...NS}
-              initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: lit && !on ? .12 : .25 + b * .1 }} transition={{ pathLength: { duration: 1.6, delay: 1 + i * .1, ease }, opacity: { duration: .4 } }} />
-          })}
-
-          {/* you */}
-          <g transform={`translate(${YOU.x},${YOU.y})`}>
-            <circle r="16" className="you-ring" fill="none" stroke="var(--signal)" strokeWidth=".8" {...NS} />
-            <circle r="6" fill="var(--signal)" />
-            <text y="-28" textAnchor="middle" className="crew-n">You</text>
-            <text y="40" textAnchor="middle" className="micro">Captain</text>
-          </g>
-
-          {/* crew */}
-          {ids.map((id, i) => {
-            const p = POS[id], m = CREW[id]
-            return (
-              <motion.g key={id} transform={`translate(${p.x},${p.y})`} className={`crew${sel === id ? ' sel' : ''}${lit && lit !== id ? ' dim' : ''}`}
-                role="button" tabIndex={0} aria-label={`${m.name}, ${m.role}`} data-cursor={m.role}
-                onClick={() => setSel(sel === id ? null : id)} onKeyDown={(e) => e.key === 'Enter' && setSel(id)} onMouseEnter={() => setHov(id)} onMouseLeave={() => setHov(null)}
-                initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.4 + i * .1, duration: .8 }}>
-                <circle r="30" fill="transparent" />
-                <circle r="15" className="node" {...NS} />
-                <text y="4" textAnchor="middle" className="crew-id">{id}</text>
-                <g transform={`translate(0,${p.ly * 34})`}>
-                  <text y={p.ly < 0 ? -18 : 10} textAnchor="middle" className="crew-n">{m.name}</text>
-                  <text y={p.ly < 0 ? 0 : 28} textAnchor="middle" className="micro">{m.role} · {m.station}</text>
-                </g>
-              </motion.g>
-            )
-          })}
-
-          {/* title block */}
-          <g transform="translate(1250,612)" className="tblock">
-            <rect width="270" height="92" fill="none" stroke="var(--bone)" strokeWidth=".6" opacity=".5" {...NS} />
-            <path d="M0 30 H270 M135 30 V92" stroke="var(--bone)" strokeWidth=".6" opacity=".35" {...NS} />
-            <text x="14" y="21" className="micro">Plan of the deck</text>
-            <text x="14" y="54" className="micro">Week {week}</text><text x="14" y="78" className="micro">By Athena</text>
-            <text x="149" y="54" className="micro">Scale · trust</text><text x="149" y="78" className="micro">Example</text>
-          </g>
-        </svg>
-      </div>
+      <AnimatePresence mode="wait">
+        <motion.div key={sheet} className={`deck-stage ${sheet}`} initial={{ opacity: 0, clipPath: 'inset(0 0 0 100%)' }} animate={{ opacity: 1, clipPath: 'inset(0 0 0 0%)' }} exit={{ opacity: 0 }} transition={{ duration: .9, ease }}>
+          {sheet === 'profile' ? <Profile sel={sel} setSel={setSel} lit={lit} setHov={setHov} /> : <Plan sel={sel} setSel={setSel} lit={lit} setHov={setHov} />}
+        </motion.div>
+      </AnimatePresence>
 
       <aside className="manifest" onClick={(e) => e.stopPropagation()}>
         <AnimatePresence mode="wait">
@@ -126,6 +59,7 @@ export default function DeckView() {
           ) : (
             <motion.div key="all" className="m-card" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: .5, ease }}>
               <p className="eyebrow"><i />Crew manifest</p>
+              <p className="lede">The six people you sail with most, at their stations. Each is tied to you by a line of rigging: the stronger the bond, the tauter it runs.</p>
               <ol className="roster">{ids.map((id) => (
                 <li key={id}><button onClick={() => setSel(id)} onMouseEnter={() => setHov(id)} onMouseLeave={() => setHov(null)} data-cursor="Open">
                   <span className="mono k">{id}</span><span className="nm"><b>{CREW[id].name}</b><small className="mono">{CREW[id].role}</small></span><Bond n={CREW[id].bond} small />
@@ -137,6 +71,87 @@ export default function DeckView() {
         </AnimatePresence>
       </aside>
     </div>
+  )
+}
+
+function Plan({ sel, setSel, lit, setHov }: { sel: CrewId | null; setSel: (c: CrewId | null) => void; lit: CrewId | null; setHov: (c: CrewId | null) => void }) {
+  const week = useStore((s) => s.week)
+  const ids = Object.keys(CREW) as CrewId[]
+  return (
+        <svg viewBox="200 214 1340 506" preserveAspectRatio="xMidYMid meet" onClick={(e) => { if (e.target === e.currentTarget) setSel(null) }}>
+    <defs><clipPath id="hullclip"><path d={DECK} /></clipPath></defs>
+    {/* dimension lines */}
+    <g className="dims" stroke="var(--bone)" strokeWidth=".6" opacity=".45">
+      <path d="M300 250 H1384 M300 242 V258 M1384 242 V258" {...NS} />
+      <path d="M246 362 V538 M238 362 H254 M238 538 H254" {...NS} />
+    </g>
+    <text x="842" y="240" textAnchor="middle" className="micro">Length over all · six stations</text>
+    <text x="232" y="450" textAnchor="middle" className="micro" transform="rotate(-90 232 450)">Beam</text>
+
+    {/* the hull */}
+    <Draw d={HULL} w={1.2} />
+    <Draw d={DECK} w={.6} o={.6} delay={.3} />
+    <g clipPath="url(#hullclip)" opacity=".22">{[392, 414, 436, 464, 486, 508].map((y) => <path key={y} d={`M300 ${y} H1400`} stroke="var(--bone)" strokeWidth=".5" {...NS} />)}</g>
+    <path d="M282 450 H1500" stroke="var(--bone)" strokeWidth=".6" strokeDasharray="18 4 2 4" opacity=".4" {...NS} />
+    <text x="1508" y="454" className="micro">CL</text>
+    <Draw d="M1384 450 L1478 450" w={1} delay={.6} />
+    {/* stern cabin, helm, masts, hold */}
+    <rect x="318" y="398" width="76" height="104" fill="none" stroke="var(--bone)" strokeWidth=".6" strokeDasharray="3 3" opacity=".5" {...NS} />
+    <g transform={`translate(${YOU.x},${YOU.y})`} opacity=".7">{[0, 45, 90, 135].map((a) => <path key={a} d="M-20 0 H20" stroke="var(--bone)" strokeWidth=".6" transform={`rotate(${a})`} {...NS} />)}<circle r="15" fill="none" stroke="var(--bone)" strokeWidth=".6" {...NS} /></g>
+    {[[640, 17], [980, 15]].map(([x, r]) => <g key={x}>
+      <path d={`M${x} 332 V568`} stroke="var(--bone)" strokeWidth=".6" strokeDasharray="6 4" opacity=".4" {...NS} />
+      <circle cx={x} cy="450" r={r} fill="var(--ink)" stroke="var(--bone)" strokeWidth=".9" {...NS} /><circle cx={x} cy="450" r={r * .45} fill="none" stroke="var(--bone)" strokeWidth=".6" {...NS} />
+    </g>)}
+    <g opacity=".6"><rect x="764" y="420" width="92" height="60" fill="none" stroke="var(--bone)" strokeWidth=".7" {...NS} /><path d="M764 420 L856 480 M856 420 L764 480" stroke="var(--bone)" strokeWidth=".5" {...NS} /></g>
+    <text x="810" y="500" textAnchor="middle" className="micro">Hold</text>
+    <text x="640" y="590" textAnchor="middle" className="micro">Main mast</text>
+    <text x="980" y="590" textAnchor="middle" className="micro">Fore mast</text>
+
+    {/* bonds */}
+    {ids.map((id, i) => {
+      const p = POS[id], b = CREW[id].bond, mx = (YOU.x + p.x) / 2, my = (YOU.y + p.y) / 2 + (p.y < YOU.y ? -40 : p.y > YOU.y ? 40 : (i % 2 ? 46 : -46))
+      const on = lit === id
+      return <motion.path key={id} d={`M${YOU.x} ${YOU.y} Q${mx} ${my} ${p.x} ${p.y}`} fill="none" className={`bond-line${on ? ' on' : ''}`}
+        stroke={on ? 'var(--signal)' : 'var(--bone)'} strokeWidth={.5 + b * .45} {...NS}
+        initial={{ pathLength: 0, opacity: 0 }} animate={{ pathLength: 1, opacity: lit && !on ? .12 : .25 + b * .1 }} transition={{ pathLength: { duration: 1.6, delay: 1 + i * .1, ease }, opacity: { duration: .4 } }} />
+    })}
+
+    {/* you */}
+    <g transform={`translate(${YOU.x},${YOU.y})`}>
+      <circle r="16" className="you-ring" fill="none" stroke="var(--signal)" strokeWidth=".8" {...NS} />
+      <circle r="6" fill="var(--signal)" />
+      <text y="-28" textAnchor="middle" className="crew-n">You</text>
+      <text y="40" textAnchor="middle" className="micro">Captain</text>
+    </g>
+
+    {/* crew */}
+    {ids.map((id, i) => {
+      const p = POS[id], m = CREW[id]
+      return (
+        <motion.g key={id} transform={`translate(${p.x},${p.y})`} className={`crew${sel === id ? ' sel' : ''}${lit && lit !== id ? ' dim' : ''}`}
+          role="button" tabIndex={0} aria-label={`${m.name}, ${m.role}`} data-cursor={m.role}
+          onClick={() => setSel(sel === id ? null : id)} onKeyDown={(e) => e.key === 'Enter' && setSel(id)} onMouseEnter={() => setHov(id)} onMouseLeave={() => setHov(null)}
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.4 + i * .1, duration: .8 }}>
+          <circle r="30" fill="transparent" />
+          <circle r="15" className="node" {...NS} />
+          <text y="4" textAnchor="middle" className="crew-id">{id}</text>
+          <g transform={`translate(0,${p.ly * 34})`}>
+            <text y={p.ly < 0 ? -18 : 10} textAnchor="middle" className="crew-n">{m.name}</text>
+            <text y={p.ly < 0 ? 0 : 28} textAnchor="middle" className="micro">{m.role} · {m.station}</text>
+          </g>
+        </motion.g>
+      )
+    })}
+
+    {/* title block */}
+    <g transform="translate(1250,612)" className="tblock">
+      <rect width="270" height="92" fill="none" stroke="var(--bone)" strokeWidth=".6" opacity=".5" {...NS} />
+      <path d="M0 30 H270 M135 30 V92" stroke="var(--bone)" strokeWidth=".6" opacity=".35" {...NS} />
+      <text x="14" y="21" className="micro">Plan of the deck</text>
+      <text x="14" y="54" className="micro">Week {week}</text><text x="14" y="78" className="micro">By Athena</text>
+      <text x="149" y="54" className="micro">Scale · trust</text><text x="149" y="78" className="micro">Example</text>
+    </g>
+        </svg>
   )
 }
 
