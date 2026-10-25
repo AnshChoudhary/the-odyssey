@@ -18,7 +18,7 @@ export function NextChapter({ id }: { id: ViewId }) {
       <span className="mono dim">Next · {pad(i + 1)} · {n.sec}</span>
       <b>{n.label} <span className="arr">→</span></b>
       <span className="mono dim">{n.desc}</span>
-      <span className="mono dim colophon">The Work Odyssey · Example data · A draft, never a verdict</span>
+      <span className="mono dim colophon">The Work Odyssey · Demo · crew and events illustrative · A draft, never a verdict</span>
     </a>
   )
 }

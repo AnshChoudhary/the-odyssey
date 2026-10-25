@@ -61,7 +61,7 @@ function Seal({ on }: { on: boolean }) {
 export function LogView() {
   const { confirmed, priv, set, setRoute, toast } = useStore()
   const [sealed, setSealed] = useState(false)
-  const intro = useTypewriter('Here is your week, Captain. I may have read the sea wrong, so correct me wherever I did. Only you decide what is true.', 22)
+  const intro = useTypewriter('Here is your week, Ansh. I may have read the sea wrong, so correct me wherever I did. Only you decide what is true.', 22)
   const rows = [...LOG.reached, ...LOG.storm, ...(priv ? LOG.sinking : [])]
   const done = rows.filter((r) => confirmed[r.id]).length
   const g = GOALS[0]

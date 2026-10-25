@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Field } from './Field'
-import { NOW_WEEK, WEEKS } from '../data'
+import { NOW_WEEK, PERSON, WEEKS } from '../data'
 
 const ease = [.22, 1, .36, 1] as const
 const WORD = 'Odyssey'
@@ -24,10 +24,10 @@ export function Intro({ onDone }: { onDone: () => void }) {
       <div className="i-vig" />
       <motion.i className="i-rule t" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 1.6, ease, delay: .2 }} />
       <motion.i className="i-rule b" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 1.6, ease, delay: .35 }} />
-      <motion.p className="i-corner tl mono" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: .6 }}>Chart No. {NOW_WEEK}<br />The Ionian Sea</motion.p>
+      <motion.p className="i-corner tl mono" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: .6 }}>Chart No. {NOW_WEEK} · the voyage of<br />{PERSON.name}, {PERSON.role}</motion.p>
       <motion.p className="i-corner tr mono" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: .6 }}><Fix /></motion.p>
       <motion.p className="i-corner bl mono" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2 }}>Surveyed by Athena<br />from Slack · Zoom · GitHub</motion.p>
-      <motion.p className="i-corner br mono" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2 }}>{WEEKS[NOW_WEEK]}<br />Example data</motion.p>
+      <motion.p className="i-corner br mono" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2 }}>{WEEKS[NOW_WEEK]} · {PERSON.city}<br />Demo · the crew is illustrative</motion.p>
       <div className="i-copy">
         <motion.p className="i-kicker eyebrow" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .5, duration: 1, ease }}><i />The Work<i /></motion.p>
         <h1 aria-label="The Work Odyssey">

@@ -61,7 +61,7 @@ export default function App() {
     <>
       <main id="views"><View key={shown} /></main>
       <Hud />
-      {(shown === 'map' || shown === 'deck') && <p className="corner-note mono">Example data · a draft, never a verdict</p>}
+      {(shown === 'map' || shown === 'deck') && <p className="corner-note mono">Demo · crew and events illustrative · a draft, never a verdict</p>}
       <AnimatePresence>{menu && <Menu />}</AnimatePresence>
       <div id="curtain" ref={curtain} aria-hidden="true">
         <div className="c-in">

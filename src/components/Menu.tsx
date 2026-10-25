@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { NAV, NOW_WEEK, WEEKS } from '../data'
+import { NAV, NOW_WEEK, PERSON, WEEKS } from '../data'
 import { useStore } from '../store'
 import { pad } from '../lib'
 import { Field } from './Field'
@@ -14,6 +14,9 @@ export function Menu() {
       <motion.div className="m-left" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: .45, duration: .8 }}>
         <p className="lead">A sea chart of your work. <em>Islands</em> are commitments, <em>storms</em> are what needs you, and the <em>continent</em> is everything you have shipped.</p>
         <div className="m-meta mono">
+          <span>Captain</span><b>{PERSON.name}</b>
+          <span>Post</span><b>{PERSON.role} · {PERSON.team}</b>
+          <span>Home port</span><b>{PERSON.city}</b>
           <span>Survey</span><b>Week {NOW_WEEK} · {WEEKS[NOW_WEEK]}</b>
           <span>Sources</span><b>Slack · Zoom · GitHub</b>
           <span>Posture</span><b>Private by default</b>

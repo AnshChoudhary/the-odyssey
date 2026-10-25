@@ -1,6 +1,6 @@
 import { memo, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { CREW, CrewId } from '../data'
+import { CREW, CrewId, PERSON } from '../data'
 import { liveIslands, useStore } from '../store'
 
 /*
@@ -62,7 +62,7 @@ const Horizon = memo(function Horizon() {
       <g transform={`translate(196,${HZ})`}>
         <path d="M-2 0 L-1.4 -15 H1.4 L2 0Z" fill="var(--bone)" /><path d="M-3 -15 h6 v-2 h-6z" fill="var(--bone)" />
         <path className="beam" d="M0 -17 L-22 -24 L-22 -12Z" fill="var(--signal)" opacity=".5" />
-        <text y="7" textAnchor="middle" className="hz-t" style={HZT}>PR #EX-218</text><text y="12" textAnchor="middle" className="hz-t" style={HZT}>review waiting</text>
+        <text y="7" textAnchor="middle" className="hz-t" style={HZT}>gateway #431</text><text y="12" textAnchor="middle" className="hz-t" style={HZT}>review waiting</text>
       </g>
       <g transform={`translate(236,${HZ})`}>
         {[0, 3, 6, 9].map((dy, k) => <path key={k} d={`M${-16 + k * 2} ${-26 + dy} h${30 - k * 3}`} stroke="var(--bone)" strokeWidth=".6" {...NS} />)}
@@ -73,9 +73,9 @@ const Horizon = memo(function Horizon() {
         <path d="M-24 0 Q-12 -9 0 -10 Q12 -9 24 0Z" fill="var(--ink)" stroke="var(--bone)" strokeWidth=".6" {...NS} />
         <path d="M-12 -4 Q0 -8 12 -4" fill="none" stroke="var(--bone)" strokeWidth=".4" {...NS} />
         <path d="M-3 -10 v-4 h6 v4 M-4 -14 h8 l-4 -2z" fill="none" stroke="var(--bone)" strokeWidth=".4" {...NS} />
-        <text y="7" textAnchor="middle" className="hz-t" style={HZT}>Ithaca</text><text y="12" textAnchor="middle" className="hz-t" style={HZT}>API v2 · 62%</text>
+        <text y="7" textAnchor="middle" className="hz-t" style={HZT}>Ithaca</text><text y="12" textAnchor="middle" className="hz-t" style={HZT}>firewall · 62%</text>
       </g>
-      <g transform={`translate(162,${HZ - 1})`}><path d="M-4 0 h8 l-1.5 2 h-5z M0 0 v-7 l3 5z" fill="var(--bone)" opacity=".8" /><text y="8" textAnchor="middle" className="hz-t" style={HZT}>Teammate O</text><text y="13" textAnchor="middle" className="hz-t" style={HZT}>inbound</text></g>
+      <g transform={`translate(162,${HZ - 1})`}><path d="M-4 0 h8 l-1.5 2 h-5z M0 0 v-7 l3 5z" fill="var(--bone)" opacity=".8" /><text y="8" textAnchor="middle" className="hz-t" style={HZT}>Kenji W.</text><text y="13" textAnchor="middle" className="hz-t" style={HZT}>inbound</text></g>
     </g>
   )
 })
@@ -258,8 +258,8 @@ export function Profile({ sel, setSel, lit, setHov }: { sel: CrewId | null; setS
         <g transform={`translate(${YOU.x},${YOU.y})`}>
           <circle r="14" className="you-ring" fill="none" stroke="var(--signal)" strokeWidth=".8" {...NS} />
           <circle r="5.5" fill="var(--signal)" />
-          <text x="-24" y="-12" textAnchor="end" className="crew-n">You</text>
-          <text x="-24" y="4" textAnchor="end" className="micro">Captain · quarterdeck</text>
+          <text x="-24" y="-12" textAnchor="end" className="crew-n">{PERSON.first}</text>
+          <text x="-24" y="4" textAnchor="end" className="micro">You · captain</text>
         </g>
         {ids.map((id, i) => {
           const p = ST[id], m = CREW[id], on = lit === id
@@ -273,7 +273,7 @@ export function Profile({ sel, setSel, lit, setHov }: { sel: CrewId | null; setS
               <text x={p.x} y={p.y + 4} textAnchor="middle" className="crew-id">{id}</text>
               <g transform={`translate(${p.slot},796)`}>
                 <rect x="-68" y="-22" width="136" height="70" fill="transparent" />
-                <text textAnchor="middle" className="crew-n">{m.name}</text>
+                <text textAnchor="middle" className="crew-n">{m.short}</text>
                 <text y="20" textAnchor="middle" className="micro">{m.role}</text>
                 <text y="36" textAnchor="middle" className="micro dimmer">{m.station}</text>
               </g>

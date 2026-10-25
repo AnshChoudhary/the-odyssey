@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { CREW, CrewId } from '../data'
+import { CREW, CrewId, PERSON } from '../data'
 import { useStore } from '../store'
 import { Profile } from './DeckProfile'
 
@@ -49,6 +49,7 @@ export default function DeckView() {
           {c && sel ? (
             <motion.div key={sel} className="m-card" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: .5, ease }}>
               <p className="eyebrow"><i />{c.role} · {c.station}</p>
+              <p className="mono dim" style={{ marginTop: -8 }}>{c.title}</p>
               <h2>{c.name}</h2>
               <Bond n={c.bond} />
               <p className="why">{c.why}</p>
@@ -120,8 +121,8 @@ function Plan({ sel, setSel, lit, setHov }: { sel: CrewId | null; setSel: (c: Cr
     <g transform={`translate(${YOU.x},${YOU.y})`}>
       <circle r="16" className="you-ring" fill="none" stroke="var(--signal)" strokeWidth=".8" {...NS} />
       <circle r="6" fill="var(--signal)" />
-      <text y="-28" textAnchor="middle" className="crew-n">You</text>
-      <text y="40" textAnchor="middle" className="micro">Captain</text>
+      <text y="-28" textAnchor="middle" className="crew-n">{PERSON.first}</text>
+      <text y="40" textAnchor="middle" className="micro">You · captain</text>
     </g>
 
     {/* crew */}
@@ -136,7 +137,7 @@ function Plan({ sel, setSel, lit, setHov }: { sel: CrewId | null; setSel: (c: Cr
           <circle r="15" className="node" {...NS} />
           <text y="4" textAnchor="middle" className="crew-id">{id}</text>
           <g transform={`translate(0,${p.ly * 34})`}>
-            <text y={p.ly < 0 ? -18 : 10} textAnchor="middle" className="crew-n">{m.name}</text>
+            <text y={p.ly < 0 ? -18 : 10} textAnchor="middle" className="crew-n">{m.short}</text>
             <text y={p.ly < 0 ? 0 : 28} textAnchor="middle" className="micro">{m.role} · {m.station}</text>
           </g>
         </motion.g>

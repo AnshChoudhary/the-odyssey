@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ROUTES, SHIPPED, VOYAGE, COUNSEL, NOW_WEEK, TRACK, HEADLINE, WEEKS } from '../data'
+import { ROUTES, SHIPPED, VOYAGE, COUNSEL, NOW_WEEK, TRACK, HEADLINE, WEEKS, PERSON } from '../data'
 import { LiveIsland, landmarks, liveIslands, shippedCount, useStore } from '../store'
 import { NM_PER_UNIT, blob, contour, fmtLat, fmtLon, hash, noise3, pad, rng, useCountUp, useTypewriter } from '../lib'
 
@@ -199,7 +199,7 @@ function Ship({ week, onBoard }: { week: number; onBoard: () => void }) {
         <path d="M16 0 C 8 -6, -6 -7, -14 -5 L -14 5 C -6 7, 8 6, 16 0Z" fill="var(--bone)" />
         <path d="M-14 -5 L-14 5" stroke="var(--ink)" strokeWidth="1" />
       </motion.g>
-      <text x="0" y="40" textAnchor="middle" className="ship-t">You · W{week}</text>
+      <text x="0" y="40" textAnchor="middle" className="ship-t">{PERSON.first} · W{week}</text>
       <text x="0" y="54" textAnchor="middle" className="micro ship-sub">board the ship</text>
     </motion.g>
   )
@@ -215,7 +215,7 @@ const IslandArt = memo(function IslandArt({ isl, selected }: { isl: LiveIsland; 
   const ex = isl.r * 1.25, ey = isl.r * .9
   const lx = isl.lab === 'r' ? ex + 16 : isl.lab === 'l' ? -ex - 16 : 0, ly = isl.lab === 'b' ? ey + 26 : -2
   const anchor = isl.lab === 'r' ? 'start' : isl.lab === 'l' ? 'end' : 'middle'
-  const meta = `${isl.src} · ${isl.age}d${over ? ' · overdue' : ''}${isl.who ? ' · with ' + isl.who.replace('Teammate ', 'T.') : ''}`
+  const meta = `${isl.src} · ${isl.age}d${over ? ' · overdue' : ''}${isl.who ? ' · with ' + isl.who.split(' ')[0] : ''}`
   return (
     <g className={`isl ${isl.state}${selected ? ' sel' : ''}`}>
       <ellipse rx={ex * 1.35} ry={ey * 1.35} className="hit" />
@@ -262,8 +262,8 @@ const Continent = memo(function Continent({ marks, selected, shipped, week }: { 
             {m.isNew && <circle cx={x} cy={y} r="5" className="pulse" fill="none" stroke="var(--brass)" strokeWidth=".8" {...NS} />}
             <circle cx={x} cy={y} r="5" fill="var(--ink)" stroke="var(--brass)" strokeWidth=".9" {...NS} /><circle cx={x} cy={y} r="1.7" fill="var(--brass)" />
             <path d={`M${x + 9} ${y} H${x + 22}`} stroke="var(--brass)" strokeWidth=".7" {...NS} opacity=".7" />
-            <text x={x + 28} y={y + 5} className="mark-t">{m.t.replace(/^(Merged|Closed|Shipped|Reviewed): ?/, '')}</text>
-            <text x={x + 28} y={y + 20} className="micro">{(m.t.match(/^(\w+)/)?.[1] ?? 'Shipped')}{m.isNew ? ' · this week' : ''}</text>
+            <text x={x + 28} y={y + 5} className="mark-t">{m.t.replace(/^[\w-]+: ?/, '')}</text>
+            <text x={x + 28} y={y + 20} className="micro">{(m.t.match(/^([\w-]+):/)?.[1] ?? 'Shipped')}{m.isNew ? ' · this week' : ''}</text>
           </g>
         )
       })}
@@ -428,14 +428,14 @@ export default function MapView() {
           {sel ? <IslandCard key={sel.id} sel={sel} n={order.indexOf(sel.id) + 1} act={act} /> : selMark ? (
             <Panel key={selected}>
               <p className="eyebrow"><i />The Shipped Continent</p>
-              <h2>{selMark.t.replace(/^(\w+): ?/, '')}</h2>
-              <div className="tags"><span className="tag brass"><span className="dot" />{selMark.t.match(/^(\w+)/)?.[1] ?? 'Shipped'}</span><span className="tag">Week {SHIPPED.find((s) => s.t === selMark.t)?.w ?? NOW_WEEK}</span></div>
+              <h2>{selMark.t.replace(/^[\w-]+: ?/, '')}</h2>
+              <div className="tags"><span className="tag brass"><span className="dot" />{selMark.t.match(/^([\w-]+):/)?.[1] ?? 'Shipped'}</span><span className="tag">Week {SHIPPED.find((s) => s.t === selMark.t)?.w ?? NOW_WEEK}</span></div>
               <p className="body">{selMark.d}</p>
               <button className="link back" onClick={() => select(null)}>← Back to the voyage log</button>
             </Panel>
           ) : (
             <Panel key={'log' + week}>
-              <p className="eyebrow"><i />Voyage log · W{week}</p>
+              <p className="eyebrow"><i />{PERSON.first}'s voyage log · W{week}</p>
               <p className="wk mono dim">{WEEKS[week]}</p>
               <h2>{HEADLINE[week]}</h2>
               <div className="stats">
