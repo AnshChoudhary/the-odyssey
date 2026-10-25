@@ -1,303 +1,138 @@
 # The Work Odyssey
 
-An AI-run HR performance & appraisal experience where every employee's work is visualized as a voyage on a hand-drawn old sea chart.
+A performance and appraisal experience where your work is a sea chart. Islands are what you are carrying, storms are what needs you, and the continent is everything you have shipped. An AI guide, Athena, drafts the chart from Slack, Zoom and GitHub. You correct it. It is a draft, never a verdict.
 
-![The Work Odyssey - Main Map View](assets/mockup.png)
+**Live demo:** [anshchoudhary.github.io/the-odyssey](https://anshchoudhary.github.io/the-odyssey/)
+
+![The chart](assets/screens/chart.jpg)
 
 ## Run it
 
 ```bash
 npm install
 npm run dev      # http://localhost:5173
-npm run build    # type-check + production bundle in dist/
+npm run build    # type-check, then a production bundle in dist/
 ```
 
-**Stack:** Vite, React 18, TypeScript, Framer Motion, Zustand. The sea chart is hand-built SVG with a custom spring camera (drag, scroll-zoom, fly-to-island), and every view is a themed scene joined by a wave-wipe transition. Press `⌘K` for the command menu and `Esc` to return to the chart. The original single-file prototype lives in `prototype/index.html`.
+Pushes to `main` deploy to GitHub Pages through `.github/workflows/pages.yml`.
 
-## Concept
+## The idea
 
-The Work Odyssey reimagines performance tracking and HR appraisals through a narrative, visual interface inspired by ancient maritime charts. Instead of sterile dashboards and cold metrics, employees see their work as an evolving journey across a living sea map.
+Most performance tools are dashboards of scores. The Odyssey treats a working week as a voyage instead, and keeps three promises:
 
-### The Map as Mirror
+- **A mirror first, an appraisal input second.** Nothing on the chart is a grade. There are no rankings and no scores, only direction.
+- **You are the captain.** Every summary is a draft. Confirm it, correct it, or add the context Athena missed. Corrections redraw the chart.
+- **Private by default.** Forgotten promises are visible only to you. The manager lens shows outcomes, never the forgotten waters.
 
-**Islands** represent tasks and commitments:
-- Active islands: current work in progress
-- Stormy waters near your ship: work that needs immediate attention
-- Sinking, faded islands: forgotten commitments you can rescue or dismiss
-- **The Shipped Continent**: your completed work, growing with each achievement
+## The voyage
 
-**Your Ship** is positioned on the map based on your current focus. Click the ship to zoom into the deck.
+The demo follows **Ansh Choudhary, Senior AI Engineer** on an AI Platform team in Dubai, through week 43 (October 19 to 25).
 
-![The Deck View](assets/deck.png)
+### 01 · The Chart
 
-**The Crew** represents your close collaborators, visible when you board your ship:
-- **First Mate**: your closest collaborator (most shared threads, calls, co-authored work)
-- **Navigator**: the person you go to for direction
-- **Quartermaster**: checks your cargo (frequent PR reviewer)
-- **Lookout**: spots trouble early (flags incidents and bugs)
-- **Deckhands**: wider circle of regular collaborators
+The home view: an engraved night chart of the Ionian Sea, drawn as hairlines on ink with one signal red.
 
-Each crew member shows their role, bond strength (1-5), and recent interactions.
+- **Islands** are commitments, drawn as contour rings. More rings mean more weight.
+- **Danger areas** (red, dashed, with rocks) are overdue work or someone waiting on you.
+- **E.D.**, the chart abbreviation for "existence doubtful", marks forgotten promises slipping under the sea. They are visible only in the private view.
+- **A flashing light** (`FL R · 6h`) marks a review someone requested from you.
+- **The Shipped Continent** on the left collects everything that landed, week by week.
+- **The ship's track** shows where you have been. Step back through the weeks and the ship sails back along it.
+- **The sea is alive.** Depth contours are traced live on a canvas from simplex noise, bend around each island, and settle back when an island is resolved.
 
-![Crew Member Detail](assets/deck-card.png)
+Drag to pan, scroll to zoom, and click an island to survey it. From the panel you can mark it shipped, rescue it or let it go.
 
-**The Distant Fleet**: your circle of influence—people who rely on you.
+![Surveying an island](assets/screens/island.jpg)
 
-### Demo
+### 06 · The Deck
 
-Watch the full interaction flow:
+Click the ship to board. Sheet I is an inboard profile of a three-masted ship, cut away to show who works where:
 
-https://github.com/user/repo/blob/main/assets/flow.mp4
+- **The crew stands at their stations:** First Mate at the helm, Navigator at the chart table, Quartermaster in the hold, Lookout in the crow's nest, and two Deckhands at the bow.
+- **Bonds are rigging.** A line runs from you to each person, and the stronger the bond, the tauter it runs. Hover someone and their line pulls taut and turns red.
+- **The hold carries your open work as cargo.** Overdue crates are red, and forgotten ones sit half under the water at the bottom of the hold. Click a crate to fly to its island.
+- **The lookout's glass.** Hover the horizon to see what is coming: a storm, a review waiting, Ithaca in the distance.
 
-*(Or download and view [assets/flow.mp4](assets/flow.mp4) directly)*
+Sheet II is the same crew as a top-down deck plan.
 
-## Navigation
+![The deck](assets/screens/deck.jpg)
 
-**Simple, collapsible left sidebar** organizes everything into four sections with plain-English labels:
+### 04 · The Captain's Log (weekly, about two minutes)
 
-- **My Voyage**: Map (home), Ithaca (goals), Calypso's Island (stuck work)
-- **Check-ins**: Captain's Log (weekly), Three Trials (monthly)
-- **Crew & Fleet**: My Crew, Recruit a Crew Member, Ports of Call, The Armada (team view)
-- **Chronicle**: Chapters of the Epic, Gifts from the Gods
+Athena's summary of your week on paper: islands reached, stormy waters, and promises slipping under. Each entry can be confirmed, amended or given context. Amendments redraw the chart. Sign and seal it when you are done.
 
-Active view is highlighted, breadcrumb shows where you are, **Esc closes** modals and returns to map, **? button** shows legend explaining every metaphor.
+![The Captain's Log](assets/screens/captains-log.jpg)
 
-**First-visit onboarding**: 3-step Athena tour (skippable, "replay tour" link) explaining the map metaphor and sidebar.
+### 05 · The Three Trials (monthly, about five minutes)
 
-![Navigation with Sidebar](assets/nav-sidebar-open.png)
+The month's three hardest problems, shown as engraved plates:
 
-## Features
+- **The Cyclops** is a blocker, a single point of failure. Its eye follows your cursor.
+- **Poseidon's Storm** is an incident.
+- **Scylla and Charybdis** is a trade-off with no good choice.
 
-### Current Prototype (Single-file HTML)
+Confirm each trial, swap it for a harder one, or add the backstory. Athena then writes the month as an epic chapter, which you can keep private or share.
 
-✅ **Interactive hand-drawn sea chart** with animated elements  
-✅ **Island states**: active, overdue (red border + storm), and sinking/forgotten (faded with blur)  
-✅ **Ship click-to-zoom** transition into the deck view  
-✅ **Animated crew members** with unique appearance, roles, and personalities  
-✅ **Crew detail cards** showing bond strength and recent interactions  
-✅ **Week navigation** to explore historical voyage data  
-✅ **Privacy toggle** (🔒 Private view) to hide/show forgotten work  
-✅ **Voyage log** with natural-language weekly summary  
-✅ **Stats dashboard**: Shipped, Needs Attention, Sinking counts  
-✅ **Legend** explaining map symbols and visual language  
-✅ **Source tags** (Slack, Zoom, GitHub) linking work to its origin  
-✅ **Compass rose** and period-appropriate typography  
-✅ **Example data** clearly marked throughout
+![The Three Trials](assets/screens/three-trials.jpg)
 
-### ✨ AI Check-In Features
+### Everything else
 
-#### 📜 Weekly Captain's Log (~2 minutes)
+| | View | What it is |
+|---|---|---|
+| 02 | **Ithaca** | Goals as a passage toward Ithaca, with coaching instead of grades. |
+| 03 | **Calypso** | Work that has gone becalmed. Set sail, ask the crew, or let it go. |
+| 07 | **Recruit** | People whose work overlaps yours but who you rarely work with. |
+| 08 | **Ports of Call** | Cross-team projects, and who is docked there. |
+| 09 | **The Armada** | Teams as fleets, for managers: ships sailing alone, crews riding low under heavy load. Outcomes only. |
+| 10 | **Chapters** | Each month as editable prose. |
+| 11 | **Gifts** | Every thank-you, kept in one place. |
 
-![Captain's Log](assets/captains-log.png)
+<p>
+  <img src="assets/screens/ithaca.jpg" width="49%" alt="Ithaca" />
+  <img src="assets/screens/gifts.jpg" width="49%" alt="Gifts" />
+</p>
 
-A scroll delivered by **Athena** (your AI guide) summarizing your week:
-- **Islands Reached** (completed work)
-- **Stormy Waters** (needs attention)
-- **Sinking Islands** (forgotten commitments — private by default)
+`Index` opens a full-screen table of contents. `⌘K` opens search, and `Esc` returns you to the chart.
 
-**Interactive Corrections:**
-- **"Aye, that's right"** — Confirm the AI got it right
-- **"Not quite"** — Inline edit to correct the details
-- **"Missing context"** — Add a one-line note about what the AI missed
+![The index](assets/screens/index.jpg)
 
-**Horizon View:**
-- **Ithaca** (Q4 expectations) shown as destination with progress bar and coaching
-- **The Sirens** (distractions) — e.g., "8 hours in meetings slowed your API migration"
-- **Crew Gifts** (Slack kudos from teammates)
+## About the demo data
 
-Corrections visibly update the map. **"Draft — you're the captain"** label reinforces that this is your truth, not an evaluation.
+The captain is based on Ansh Choudhary's public GitHub. `buoyancy-test`, the tool-call firewall, the ARC-AGI-3 harness, `cuda-starter` and `Football-Tracking` all appear in the story. The crew, conversations, incidents and other teams are invented to make the voyage feel lived-in, and the UI labels them as illustrative. Everything lives in [`src/data.ts`](src/data.ts), so swapping in another person's voyage is a single-file change.
 
-#### ⚔️ Monthly Three Trials (~5 minutes)
+## Built with
 
-![Three Trials](assets/three-trials.png)
-
-The month as an epic chapter. AI identifies your 3 hardest problems as monsters:
-- **🦹 The Cyclops** = blocker (single point of failure)
-- **⚡ Poseidon's Storm** = incident (production fire, cascade failure)
-- **⚓ Scylla & Charybdis** = trade-off (no good choice, pick the least bad)
-
-**Per Trial:**
-- **Confirm** — AI got it right
-- **Swap for a harder one** — Add your own challenge
-- **Add backstory** — Why was this hard? Who helped? What would you do differently?
-
-**Epic Rendering:**
-After you've confirmed or edited all three trials, the AI renders your month as mock-epic prose incorporating your words:
-
-> *"In the waning days of October, you faced three trials... First came The Cyclops, guardian of the legacy fortress. Spent 3 weeks untangling session logic. Teammate A pair-programmed the critical refactor..."*
-
-**Privacy:** Corrections private by default. You choose what to share with your manager.
-
-### Check-In Philosophy
-
-🎯 **Draft, not verdict** — Check-ins are collaborative corrections, not performance reviews  
-🎮 **Feels like play** — Swapping monsters, writing epic backstories, correcting Athena's observations  
-🏷️ **Labeled data** — Your corrections teach the AI what "hard" means to you, improving future summaries  
-📊 **No scores or rankings** — Direction and coaching, never grades  
-🔒 **Privacy-first** — Forgotten work and backstory edits are private unless you choose to share
-
-### 📚 Epic Features
-
-#### Chapters of the Epic
-Your monthly journey told as mock-epic prose. Each month becomes a chapter incorporating Three Trials corrections. Edit, annotate, and choose what to share. Example: *"In the waning days of October, you faced three trials..."*
-
-#### 🏝️ Calypso's Island
-Projects stuck too long (age, last activity). Gentle framing with three actions:
-- **⛵ Set sail** — Plan next step
-- **🤝 Ask crew for help** — Get unblocked
-- **🌊 Let it go** — Release what no longer serves
-
-#### 🎁 Gifts from the Gods
-Treasure-chest gallery of kudos/recognition from Slack, GitHub, etc. Open a chest to read the full message. Who gave it, when, and why.
-
-#### 🚢 The Armada (Manager View)
-Team overview where each team is a fleet of ships. Highlights:
-- Ships sailing alone
-- Overloaded crews
-- Outcomes only, no message content, no rankings
-Labeled "Manager view" to set expectations.
-
-#### 🤝 Recruit a Crew Member
-AI suggestions of people whose islands overlap with yours but you rarely work with. Shows overlap area and reason. "Say ahoy" action (no actual messages sent in prototype).
-
-#### ⚓ Ports of Call
-Cross-team projects as harbors where several ships dock. Click to see teams, shared islands, and status. Example: "API v2 Migration — 3 teams docked, final sprint before launch"
-
-#### 🦉 Athena's Counsel
-Gentle daily nudge as a dismissible notification on the map. Example: *"Teammate H has been waiting on your review for 6 hours."* History of past counsel available.
-
-#### 🏛️ Ithaca, the North Star
-Q4 manager expectations + personal career goals. Each goal shows:
-- Progress bar (heading toward Ithaca)
-- Coaching line from Athena (direction, not grades)
-Links from Captain's Log Ithaca section.  
-
-### Privacy Principles
-
-🔒 **The map is a mirror first, appraisal input second.**
-- Forgotten/sinking islands are **private by default** and visible only to the employee
-- Managers see outcomes and shipped work, not the forgotten waters
-- **Never score from the sea alone**: performance is contextual, not purely metric-based
-
-🛡️ **Transparency in data sources:**
-- All data sources are labeled (Slack, Zoom, GitHub)
-- Sync timestamp clearly displayed
-- EXAMPLE DATA badge shown in prototype
-
-## Data Source Roadmap
-
-### Phase 1: Foundation (Current Prototype)
-- ✅ Static example data
-- ✅ Visual design system
-- ✅ Interaction patterns
-
-### Phase 2: Live Integrations (Future)
-- [ ] **Slack**: threads, DMs, reactions, mentions
-- [ ] **Zoom**: meeting attendance, duration, participant lists
-- [ ] **GitHub**: PRs, reviews, commits, issues
-- [ ] **Calendar**: meeting patterns, time blocking
-
-### Phase 3: Collaboration Graphs (Future)
-- [ ] Circle of influence mapping
-- [ ] Bond strength algorithm (weighted by interaction frequency, recency, and type)
-- [ ] Team network visualization
-
-### Phase 4: AI Intelligence Layer (Future)
-- [ ] Natural language voyage logs (weekly summaries)
-- [ ] Sentiment analysis from communication patterns
-- [ ] Proactive "storm warnings" for at-risk commitments
-- [ ] Smart rescue/dismiss suggestions
-
-## How to Run
-
-**Just open `index.html` in a modern web browser.** No build process, no dependencies, no server required.
-
-```bash
-# Clone the repository
-git clone https://github.com/user/repo.git
-cd repo
-
-# Open in your browser
-open index.html  # macOS
-xdg-open index.html  # Linux
-start index.html  # Windows
-```
-
-Or simply double-click `index.html` in your file explorer.
-
-Works best in:
-- Chrome/Edge (latest)
-- Firefox (latest)
-- Safari (latest)
-
-## Technical Details
-
-- **Single-file prototype**: All HTML, CSS, and JavaScript in `index.html`
-- **No frameworks**: Vanilla JavaScript for maximum portability
-- **SVG-based graphics**: Hand-drawn aesthetic with filters and animations
-- **Web fonts**: IM Fell English (nautical headings), Caveat (handwritten labels), Inter (UI)
-- **Responsive**: Designed for 1440×900 viewport (desktop-first)
-
-## Buoyancy Note: The Hull
-
-This prototype is the **aesthetic and interaction layer**—the sails catching wind. The hull (data infrastructure) needs:
-
-1. **Company-owned data pipeline**: Slack/Zoom/GitHub API integrations
-2. **Review workflow embedding**: How managers use odyssey data in formal reviews
-3. **Low scaffolding**: intentionally narrative-driven, not metric-obsessed
-
-The Work Odyssey is designed to be embedded into existing HR systems, not to replace them. Think of it as a **humanizing layer** on top of performance data.
-
-## File Structure
+- **Vite, React 18 and TypeScript (strict).** Zustand holds state, and routing uses hash routes such as `#/map` and `#/deck`.
+- **Framer Motion** drives the transitions: the curtain between views, the letter-by-letter reveals, and the spring on the rigging lines.
+- **Hand-built SVG** for the chart, the ship and the trial plates. Hairlines use `vector-effect: non-scaling-stroke` so they stay crisp at any zoom.
+- **A canvas bathymetry layer.** Simplex noise is traced into contours with marching squares. Island bumps and the coastline shape the field, and it is redrawn with the chart's spring camera.
+- **Type:** Instrument Serif for display, Geist for text, Geist Mono for chart labels.
 
 ```
-/
-├── index.html                    # The complete working prototype (1049 lines, 80KB)
-├── assets/
-│   ├── mockup.png               # Main map view screenshot
-│   ├── deck.png                 # Deck view screenshot
-│   ├── deck-card.png            # Crew detail card screenshot
-│   ├── captains-log.png         # Weekly Captain's Log check-in
-│   ├── three-trials.png         # Monthly Three Trials check-in
-│   ├── nav-sidebar-open.png     # Sidebar navigation
-│   ├── nav-main-map.png         # Main map with new navigation
-│   └── flow.mp4                 # Demo video of the interaction flow
-├── README.md                    # This file
-└── LICENSE                      # MIT License
+src/
+├── App.tsx              view registry, curtain transition, global keys
+├── data.ts              the voyage: person, islands, crew, log, trials, fleets
+├── store.ts             Zustand store and derived helpers
+├── lib.ts               noise, contours, coastlines, coordinates, hooks
+├── styles.css           design tokens and shared components
+├── components/          HUD, index menu, intro, tour, legend, search, toasts, cursor, contour field
+└── views/
+    ├── MapView.tsx      the chart, camera and survey panel
+    ├── DeckView.tsx     the deck shell and Sheet II (plan)
+    ├── DeckProfile.tsx  Sheet I (inboard profile)
+    ├── Rituals.tsx      the Captain's Log and the Three Trials
+    └── Pages.tsx        Ithaca, Calypso, Chapters, Gifts, Armada, Recruit, Ports
 ```
 
-## Testing & Verification
+The original single-file prototype is kept in [`prototype/index.html`](prototype/index.html).
 
-✅ **Verified in headless browser:**
-- Page loads without console errors
-- All critical elements present (sidebar, 9 views, modals, tour, legend)
-- All 11 navigation items render
-- Sidebar structure complete
-- Tour and legend modals functional
-- Captain's Log and Three Trials still work
+## Roadmap
 
-⚠️ **Not fully verified (interactive testing timed out):**
-- Click navigation between all views (structure present, clicks not tested end-to-end)
-- All feature render functions (code present, visual verification incomplete)
-- Athena's Counsel nudge timing
-
-**Recommendation**: Manual testing in browser recommended to verify all click interactions.
-
-## Contributing
-
-This is a concept prototype. If you're interested in:
-- Building out the data pipeline
-- Integrating with real HR systems
-- Expanding the visual language
-- Adding accessibility features
-
-Please open an issue to discuss!
+- **Live sources:** Slack threads, Zoom calls and attendance, GitHub pull requests, reviews and issues, and calendar patterns.
+- **Collaboration graph:** bond strength weighted by how often, how recently and how you work with someone.
+- **Athena:** weekly drafts, storm warnings for at-risk commitments, and rescue or let-go suggestions.
+- **Review workflow:** a way to bring sealed logs and shared chapters into formal reviews without the private waters.
 
 ## License
 
-MIT License - See [LICENSE](LICENSE) file for details.
-
----
-
-**The Work Odyssey**: Where work is a journey, not a grind.  
-*All data shown is EXAMPLE DATA for demonstration purposes.*
+MIT. See [LICENSE](LICENSE).
