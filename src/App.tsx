@@ -14,6 +14,7 @@ import { Tour } from './components/Tour'
 import MapView from './views/MapView'
 import DeckView from './views/DeckView'
 import { LogView, TrialsView } from './views/Rituals'
+import PlainView from './views/PlainView'
 import { IthacaView, CalypsoView, ChaptersView, GiftsView, ArmadaView, RecruitView, PortsView } from './views/Pages'
 
 const VIEWS: Record<ViewId, () => JSX.Element> = {
@@ -22,7 +23,7 @@ const VIEWS: Record<ViewId, () => JSX.Element> = {
 }
 
 export default function App() {
-  const { route, intro, menu, set, setRoute } = useStore()
+  const { route, intro, menu, plain, set, setRoute } = useStore()
   const [tick, setTick] = useState(0)
   const shown = useStore((s) => s.shown)
   const setShown = (v: ViewId) => set({ shown: v })
@@ -32,7 +33,7 @@ export default function App() {
 
   /* the curtain: an ink panel rises, the view changes behind it, the panel lifts away */
   useEffect(() => {
-    if (route === shown || busy.current) return
+    if (plain || route === shown || busy.current) return
     busy.current = true
     const el = curtain.current!
     const ease = [.76, 0, .24, 1] as const
@@ -40,11 +41,12 @@ export default function App() {
       setShown(useStore.getState().route)
       return animate(el, { clipPath: ['inset(0 0 0% 0)', 'inset(0 0 100% 0)'] }, { duration: .8, delay: .35, ease })
     }).then(() => { busy.current = false; setTick((t) => t + 1) })
-  }, [route, shown, tick])
+  }, [route, shown, tick, plain])
 
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); set({ palette: !useStore.getState().palette }) }
+      if (useStore.getState().plain) return
       if (e.key === 'Escape') {
         const s = useStore.getState()
         if (s.palette || s.legend || s.menu) set({ palette: false, legend: false, menu: false })
@@ -57,6 +59,7 @@ export default function App() {
 
   const View = VIEWS[shown]
   const nav = ALL_NAV[idx]
+  if (plain) return <><PlainView /><Toasts /></>
   return (
     <>
       <main id="views"><View key={shown} /></main>

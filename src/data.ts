@@ -61,6 +61,14 @@ export const VOYAGE: Record<number, string> = {
   43: 'Fair winds this week: buoyancy-test is public and 11 things landed. A storm is gathering over the Q4 roadmap, and three old promises are slipping under. Rescue one before it is lost to sea.'
 };
 
+/* the same weeks, in plain words, for the simple dashboard */
+export const PLAIN_SUMMARY: Record<number, string> = {
+  40: 'A steady week. The tool-call validator merged with an 11 ms p95 cost and the eval harness guide was published. Nothing overdue.',
+  41: 'The gateway prompt cache shipped, cutting model spend by 22%. The Q3 model-quality report went to leadership with Omar. One commitment from the eval sync has not been followed up.',
+  42: 'Nine pull requests reviewed and the flaky evals fixed. Tariq is waiting on a GPU reservation decision, and the speculative-decoding spike has stalled.',
+  43: '11 items shipped, including open-sourcing buoyancy-test. The Q4 platform roadmap is overdue and three older commitments have had no activity for two weeks or more.'
+};
+
 export type CrewId = 'A' | 'B' | 'C' | 'D' | 'E' | 'F'
 export interface Crew { name: string; short: string; title: string; role: string; station: string; bond: number; why: string; it: [Src, string, string][] }
 export const CREW: Record<CrewId, Crew> = {

@@ -6,7 +6,7 @@ const PAPER: ViewId[] = ['log', 'chapters', 'recruit']
 export const isPaper = (v: ViewId) => PAPER.includes(v)
 
 export function Hud() {
-  const { week, setWeek, priv, setPriv, shown, menu, set } = useStore()
+  const { week, setWeek, priv, setPriv, shown, menu, set, setPlain } = useStore()
   const i = ALL_NAV.findIndex((n) => n.id === shown)
   const weekly = shown === 'map' || shown === 'deck' || shown === 'log'
   return (
@@ -32,6 +32,7 @@ export function Hud() {
           </label>
         )}
         {!menu && <i className="vsep" />}
+        {!menu && <button className="hud-btn kbd-hint" onClick={() => setPlain(true)} data-cursor="Simple view" title="The same data as a plain dashboard">Simple view</button>}
         {!menu && <button className="hud-btn kbd-hint" onClick={() => set({ palette: true })} data-cursor="Search">Search <span style={{ opacity: .5 }}>⌘K</span></button>}
         <button className="hud-btn" onClick={() => set({ menu: !menu })} aria-expanded={menu} data-cursor={menu ? 'Close' : 'Index'}>
           {menu ? 'Close' : 'Index'}<span className="burger" aria-hidden="true"><i /><i /></span>

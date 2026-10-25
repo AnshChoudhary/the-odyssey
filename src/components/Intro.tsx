@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Field } from './Field'
 import { NOW_WEEK, PERSON, WEEKS } from '../data'
+import { useStore } from '../store'
 
 const ease = [.22, 1, .36, 1] as const
 const WORD = 'Odyssey'
@@ -38,6 +39,7 @@ export function Intro({ onDone }: { onDone: () => void }) {
         <motion.p className="i-sub" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.7, duration: 1.1, ease }}>Your work, surveyed as a sea chart. A draft, never a verdict.</motion.p>
         <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 2.1, duration: 1, ease }}>
           <button className="btn lg solid" onClick={onDone} data-cursor="Begin" autoFocus>Begin the voyage <span className="arr">→</span></button>
+          <button className="intro-alt" onClick={() => { onDone(); useStore.getState().setPlain(true) }} data-cursor="Simple view">Or use the simple dashboard</button>
         </motion.div>
       </div>
     </motion.section>

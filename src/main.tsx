@@ -5,5 +5,6 @@ import './views/map.css'
 import './views/deck.css'
 import './views/rituals.css'
 import './views/pages.css'
+import './views/plain.css'
 
 createRoot(document.getElementById('root')!).render(<App />)

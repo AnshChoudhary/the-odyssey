@@ -21,6 +21,7 @@ export function Menu() {
           <span>Sources</span><b>Slack · Zoom · GitHub</b>
           <span>Posture</span><b>Private by default</b>
           <span>Shortcuts</span><b>⌘K search · Esc home</b>
+          <span>Prefer plain?</span><b><button className="link" onClick={() => useStore.getState().setPlain(true)}>Open the simple dashboard</button></b>
         </div>
       </motion.div>
       <div className="m-list">

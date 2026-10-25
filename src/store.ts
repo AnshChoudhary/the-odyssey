@@ -23,6 +23,8 @@ interface State {
   legend: boolean
   palette: boolean
   menu: boolean
+  plain: boolean
+  setPlain: (b: boolean) => void
   setRoute: (r: ViewId) => void
   setWeek: (w: number) => void
   setPriv: (b: boolean) => void
@@ -46,6 +48,14 @@ export const parseHash = (): ViewId => {
 let tid = 1
 const seen = (k: string) => { try { return sessionStorage.getItem(k) === '1' } catch { return false } }
 const seenL = (k: string) => { try { return localStorage.getItem(k) === '1' } catch { return false } }
+/* the simple dashboard is a per-person preference: ?view=plain or ?view=odyssey sets it, localStorage remembers it */
+const startPlain = () => {
+  const q = new URLSearchParams(location.search).get('view')
+  try {
+    if (q === 'plain' || q === 'odyssey') localStorage.setItem('view', q)
+    return localStorage.getItem('view') === 'plain'
+  } catch { return q === 'plain' }
+}
 
 export const useStore = create<State>((set, get) => ({
   route: parseHash(),
@@ -61,11 +71,13 @@ export const useStore = create<State>((set, get) => ({
   epic: null,
   extraShipped: [],
   toasts: [],
-  intro: !seen('intro'),
+  intro: !seen('intro') && !startPlain(),
   tour: seenL('tour') ? -1 : 0,
   legend: false,
   palette: false,
   menu: false,
+  plain: startPlain(),
+  setPlain: (plain) => { try { localStorage.setItem('view', plain ? 'plain' : 'odyssey') } catch { /* ok */ } set({ plain, menu: false, palette: false, legend: false, selected: null, intro: false }) },
   setRoute: (route) => { if (location.hash !== '#/' + route) location.hash = '/' + route; set({ route, selected: null, menu: false }) },
   setWeek: (w) => set({ week: Math.min(NOW_WEEK, Math.max(40, w)), selected: null }),
   setPriv: (priv) => set({ priv, selected: null }),
