@@ -4,30 +4,38 @@ export const WEEKS: Record<number, string> = {
   40: 'Sep 28 – Oct 4', 41: 'Oct 5 – 11', 42: 'Oct 12 – 18', 43: 'Oct 19 – 25'
 };
 
-/* Islands live on a 1600x1000 chart. The Shipped Continent owns x < 400. */
+/* Islands live on a 1600x1000 chart. The Shipped Continent owns x < 420; the survey panel covers x > 1170. */
 export type Src = 'Slack' | 'Zoom' | 'GitHub'
 export type IslandKind = 'active' | 'overdue' | 'sinking'
-export interface Island { id: string; name: string; src: Src; kind: IslandKind; x: number; y: number; r: number; born: number; age: number; note: string; quote: string; link: string; flare?: string; who?: string }
+export interface Island { id: string; name: string; src: Src; kind: IslandKind; x: number; y: number; r: number; born: number; age: number; note: string; quote: string; link: string; flare?: string; who?: string; lab: 'l' | 'r' | 'b' }
 export const ISLANDS: Island[] = [
-  { id: 'q4', name: 'Q4 roadmap review', src: 'Zoom', kind: 'overdue', x: 700, y: 380, r: 62, born: 41, age: 3,
+  { id: 'q4', name: 'Q4 roadmap review', src: 'Zoom', kind: 'overdue', lab: 'r', x: 730, y: 400, r: 62, born: 41, age: 3,
     note: 'Promised in "Weekly sync" (Oct 20). Three people are waiting on the draft.', quote: '“I\'ll own the Q4 roadmap review.”', link: 'Zoom call “Weekly sync” (Oct 20)' },
-  { id: 'tests', name: 'Update test plan', src: 'GitHub', kind: 'active', x: 650, y: 660, r: 40, born: 40, age: 2,
+  { id: 'tests', name: 'Update test plan', src: 'GitHub', kind: 'active', lab: 'r', x: 540, y: 640, r: 40, born: 40, age: 2,
     note: 'Open PR, green checks, waiting on your last two comments.', quote: 'PR #EX-221 · 2 comments left', link: 'GitHub PR #EX-221' },
-  { id: 'pr218', name: 'Review: PR #EX-218', src: 'GitHub', kind: 'active', flare: 'review requested', x: 1010, y: 560, r: 48, born: 40, age: 1,
+  { id: 'pr218', name: 'Review: PR #EX-218', src: 'GitHub', kind: 'active', flare: 'review requested', lab: 'b', x: 1000, y: 480, r: 48, born: 40, age: 1,
     note: 'Teammate A flagged this one. A review has been requested for 6 hours.', quote: '“Can you take a look before standup?”', link: 'GitHub PR #EX-218' },
-  { id: 'vendor', name: 'Reply re: vendor contract', src: 'Slack', kind: 'overdue', x: 880, y: 810, r: 54, born: 42, age: 4,
+  { id: 'vendor', name: 'Reply re: vendor contract', src: 'Slack', kind: 'overdue', lab: 'l', x: 895, y: 755, r: 54, born: 42, age: 4,
     note: 'A question has been drifting toward rough water for four days.', quote: '“Can you confirm the renewal terms by Friday?”', link: '#example-ops thread, asked by Teammate B' },
-  { id: 'design', name: 'Design system', src: 'GitHub', kind: 'active', who: 'Teammate B', x: 790, y: 150, r: 46, born: 40, age: 6,
+  { id: 'design', name: 'Design system', src: 'GitHub', kind: 'active', who: 'Teammate B', lab: 'r', x: 610, y: 170, r: 46, born: 40, age: 6,
     note: 'Teammate B\'s island. You are a reviewer on the tokens migration.', quote: 'Shared with Teammate B', link: 'GitHub project “Design system”' },
-  { id: 'billing', name: 'Billing migration', src: 'Slack', kind: 'active', who: 'Teammate A', x: 1050, y: 250, r: 54, born: 40, age: 8,
+  { id: 'billing', name: 'Billing migration', src: 'Slack', kind: 'active', who: 'Teammate A', lab: 'b', x: 880, y: 230, r: 54, born: 40, age: 8,
     note: 'Teammate A\'s island. Your API pagination work unblocked their first phase.', quote: 'Shared with Teammate A', link: '#example-backend' },
-  { id: 'caching', name: 'Spike: caching', src: 'GitHub', kind: 'sinking', x: 1160, y: 720, r: 40, born: 42, age: 14,
+  { id: 'caching', name: 'Spike: caching', src: 'GitHub', kind: 'sinking', lab: 'l', x: 1080, y: 830, r: 40, born: 42, age: 14,
     note: 'A spike nobody picked back up. Still useful? Rescue it or let it go.', quote: '“Spike: caching” · GitHub, 14d', link: 'GitHub issue #EX-190' },
-  { id: 'notes', name: '“I\'ll send the notes”', src: 'Zoom', kind: 'sinking', x: 690, y: 905, r: 36, born: 41, age: 19,
+  { id: 'notes', name: '“I\'ll send the notes”', src: 'Zoom', kind: 'sinking', lab: 'r', x: 520, y: 860, r: 36, born: 41, age: 19,
     note: 'A small promise from a call, nineteen days ago.', quote: '“I\'ll send the notes.” · Zoom, 19d', link: 'Zoom call “Platform sync” (Oct 6)' },
-  { id: 'followup', name: 'Follow up with Teammate C', src: 'Slack', kind: 'sinking', x: 1070, y: 900, r: 38, born: 40, age: 26,
+  { id: 'followup', name: 'Follow up with Teammate C', src: 'Slack', kind: 'sinking', lab: 'r', x: 760, y: 930, r: 38, born: 40, age: 26,
     note: 'You said you would circle back about the on-call handoff.', quote: '“Let me circle back.” · Slack, 26d', link: '#example-oncall thread' }
 ];
+/* the ship's track, one fix per week */
+export const TRACK: Record<number, [number, number]> = { 40: [470, 330], 41: [610, 300], 42: [640, 520], 43: [800, 600] }
+export const HEADLINE: Record<number, string> = {
+  40: 'A steady start, and calm water.',
+  41: 'Good progress; something starts to drift.',
+  42: 'Quiet seas, with two loose ends.',
+  43: 'Fair winds, and a storm gathering.'
+}
 export const ROUTES: [string, string][] = [['design', 'q4'], ['billing', 'pr218'], ['q4', 'tests'], ['pr218', 'vendor'], ['design', 'billing']];
 
 export const SHIPPED = [
@@ -49,19 +57,19 @@ export const VOYAGE: Record<number, string> = {
 };
 
 export type CrewId = 'A' | 'B' | 'C' | 'D' | 'E' | 'F'
-export interface Crew { name: string; role: string; bond: number; why: string; col: string; hat: string; it: [Src, string, string][] }
+export interface Crew { name: string; role: string; station: string; bond: number; why: string; it: [Src, string, string][] }
 export const CREW: Record<CrewId, Crew> = {
-  A: { name: 'Teammate A', role: 'First Mate', bond: 5, why: 'Your closest collaborator: most shared threads, calls and co-authored PRs this quarter.', col: '#6f9aa6', hat: 'tri',
+  A: { name: 'Teammate A', role: 'First Mate', station: 'Helm', bond: 5, why: 'Your closest collaborator: most shared threads, calls and co-authored PRs this quarter.',
     it: [['GitHub', 'Reviewed your PR #EX-204', '2d ago'], ['Zoom', 'Sprint planning', '3d ago'], ['Slack', 'Thread in #example-backend', '5h ago'], ['GitHub', 'Co-authored: Auth refactor', '6d ago']] },
-  B: { name: 'Teammate B', role: 'Navigator', bond: 4, why: 'The person you go to for direction. Most of your “what should we do?” threads end with them.', col: '#c98f64', hat: 'bun',
+  B: { name: 'Teammate B', role: 'Navigator', station: 'Chart table', bond: 4, why: 'The person you go to for direction. Most of your “what should we do?” threads end with them.',
     it: [['Slack', 'DM: Q4 priorities', '1d ago'], ['Zoom', '1:1 · roadmap', '4d ago'], ['Slack', 'Asked about vendor contract', '4d ago']] },
-  C: { name: 'Teammate C', role: 'Quartermaster', bond: 4, why: 'Checks your cargo. The reviewer on most of your pull requests.', col: '#7fa77e', hat: 'band',
+  C: { name: 'Teammate C', role: 'Quartermaster', station: 'Hold', bond: 4, why: 'Checks your cargo. The reviewer on most of your pull requests.',
     it: [['GitHub', 'Approved PR #EX-215', '1d ago'], ['GitHub', 'Requested changes on #EX-209', '5d ago'], ['Slack', 'Thanks for the quick fix', '6d ago']] },
-  D: { name: 'Teammate D', role: 'Lookout', bond: 3, why: 'Spots trouble early. First to flag incidents and bugs in your area.', col: '#d1b25c', hat: 'cap',
+  D: { name: 'Teammate D', role: 'Lookout', station: 'Crow\'s nest', bond: 3, why: 'Spots trouble early. First to flag incidents and bugs in your area.',
     it: [['Slack', 'Flagged: elevated 5xx on checkout', '9d ago'], ['GitHub', 'Filed #EX-190', '14d ago']] },
-  E: { name: 'Teammate E', role: 'Deckhand', bond: 2, why: 'A regular on the wider deck. Occasional pairing and standup banter.', col: '#b98a9c', hat: 'hair',
+  E: { name: 'Teammate E', role: 'Deckhand', station: 'Fore deck', bond: 2, why: 'A regular on the wider deck. Occasional pairing and standup banter.',
     it: [['Zoom', 'Standup', 'daily'], ['Slack', 'Lunch plans', '2d ago']] },
-  F: { name: 'Teammate F', role: 'Deckhand', bond: 2, why: 'A regular on the wider deck. Joins your design reviews.', col: '#8f93c9', hat: 'bun2',
+  F: { name: 'Teammate F', role: 'Deckhand', station: 'Fore deck', bond: 2, why: 'A regular on the wider deck. Joins your design reviews.',
     it: [['Zoom', 'Design review', '3d ago'], ['GitHub', 'Commented on #EX-218', '1d ago']] }
 };
 
@@ -90,15 +98,15 @@ export const LOG: { reached: LogItem[]; storm: LogItem[]; sinking: LogItem[]; si
 };
 
 export type TrialType = 'cyclops' | 'storm' | 'scylla'
-export interface Trial { id: string; type: TrialType; kind: string; glyph: string; name: string; title: string; ai: string; stats: string[][]; epic: string }
+export interface Trial { id: string; type: TrialType; kind: string; name: string; title: string; ai: string; stats: string[][]; epic: string }
 export const TRIALS: Trial[] = [
-  { id: 't1', type: 'cyclops', kind: 'Blocker', glyph: '👁', name: 'The Cyclops', title: 'The legacy session fortress',
+  { id: 't1', type: 'cyclops', kind: 'Blocker', name: 'The Cyclops', title: 'The legacy session fortress',
     ai: 'A single point of failure that guarded every login. You spent three weeks untangling its session logic before anything else could ship.',
     stats: [['3', 'weeks'], ['14', 'files'], ['5', 'people']], epic: 'First came the Cyclops, guardian of the legacy fortress' },
-  { id: 't2', type: 'storm', kind: 'Incident', glyph: '⚡', name: 'Poseidon\'s Storm', title: 'The checkout outage of October 9',
+  { id: 't2', type: 'storm', kind: 'Incident', name: 'Poseidon\'s Storm', title: 'The checkout outage of October 9',
     ai: 'Retries cascaded into a production fire. You led the response for six hours and wrote the first draft of the post-mortem.',
     stats: [['6', 'hours'], ['4', 'teams'], ['1', 'postmortem']], epic: 'Then Poseidon raised his storm: the checkout outage, retries breaking like waves' },
-  { id: 't3', type: 'scylla', kind: 'Trade-off', glyph: '🌀', name: 'Scylla & Charybdis', title: 'Ship the migration, or pay down the debt',
+  { id: 't3', type: 'scylla', kind: 'Trade-off', name: 'Scylla & Charybdis', title: 'Ship the migration, or pay down the debt',
     ai: 'No good choice: hit the billing deadline with known data debt, or slip a sprint and fix it properly. You picked the least bad.',
     stats: [['2', 'options'], ['1', 'sprint'], ['3', 'stakeholders']], epic: 'Last, between Scylla and Charybdis, no clean passage: ship on time, or mend the hull first' }
 ];
@@ -163,8 +171,9 @@ export const COUNSEL = [
 
 export type ViewId = 'map' | 'ithaca' | 'calypso' | 'log' | 'trials' | 'deck' | 'recruit' | 'ports' | 'armada' | 'chapters' | 'gifts'
 export const NAV: { sec: string; items: [ViewId, string, string][] }[] = [
-  { sec: 'My Voyage', items: [['map', 'The Chart', 'compass'], ['ithaca', 'Ithaca', 'star'], ['calypso', 'Calypso\'s Island', 'island']] },
-  { sec: 'Check-ins', items: [['log', 'Captain\'s Log', 'scroll'], ['trials', 'Three Trials', 'eye']] },
-  { sec: 'Crew & Fleet', items: [['deck', 'My Crew', 'crew'], ['recruit', 'Recruit a Crew Member', 'plus'], ['ports', 'Ports of Call', 'anchor'], ['armada', 'The Armada', 'fleet']] },
-  { sec: 'Chronicle', items: [['chapters', 'Chapters of the Epic', 'book'], ['gifts', 'Gifts from the Gods', 'gift']] }
+  { sec: 'The voyage', items: [['map', 'The Chart', 'Your week, surveyed as a sea chart'], ['ithaca', 'Ithaca', 'Where you are heading'], ['calypso', 'Calypso', 'Work that has gone becalmed']] },
+  { sec: 'Check-ins', items: [['log', 'The Captain\'s Log', 'Weekly, about two minutes'], ['trials', 'The Three Trials', 'Monthly, told as an epic']] },
+  { sec: 'Crew & fleet', items: [['deck', 'The Deck', 'The people you sail with'], ['recruit', 'Recruit', 'People whose work touches yours'], ['ports', 'Ports of Call', 'Cross-team harbours'], ['armada', 'The Armada', 'Teams as fleets, for managers']] },
+  { sec: 'Chronicle', items: [['chapters', 'Chapters', 'Each month, as prose'], ['gifts', 'Gifts', 'Every thank-you, kept']] }
 ];
+export const ALL_NAV = NAV.flatMap((s) => s.items.map(([id, label, desc]) => ({ id, label, desc, sec: s.sec })))

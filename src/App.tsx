@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, animate } from 'framer-motion'
-import { NAV, ViewId } from './data'
+import { ALL_NAV, ViewId } from './data'
 import { useStore } from './store'
-import { Hud, Rail } from './components/Hud'
+import { pad } from './lib'
+import { Hud } from './components/Hud'
+import { Menu } from './components/Menu'
 import { Cursor } from './components/Cursor'
 import { Toasts } from './components/Toasts'
 import { Palette } from './components/Palette'
@@ -18,33 +20,34 @@ const VIEWS: Record<ViewId, () => JSX.Element> = {
   map: MapView, deck: DeckView, log: LogView, trials: TrialsView, ithaca: IthacaView, calypso: CalypsoView,
   chapters: ChaptersView, gifts: GiftsView, armada: ArmadaView, recruit: RecruitView, ports: PortsView,
 }
-const titleOf = (id: ViewId) => NAV.flatMap((s) => s.items).find((i) => i[0] === id)![1]
 
 export default function App() {
-  const { route, intro, set, setRoute } = useStore()
-  const [shown, setShown] = useState<ViewId>(route)
-  const wipe = useRef<HTMLDivElement>(null)
-  const [wipeTitle, setWipeTitle] = useState('')
-  const first = useRef(true)
+  const { route, intro, menu, set, setRoute } = useStore()
+  const [tick, setTick] = useState(0)
+  const shown = useStore((s) => s.shown)
+  const setShown = (v: ViewId) => set({ shown: v })
+  const curtain = useRef<HTMLDivElement>(null)
+  const busy = useRef(false)
+  const idx = ALL_NAV.findIndex((n) => n.id === route)
 
-  /* wave-wipe between views: sea rises, view swaps behind it, sea falls */
+  /* the curtain: an ink panel rises, the view changes behind it, the panel lifts away */
   useEffect(() => {
-    if (route === shown) return
-    if (first.current) { first.current = false }
-    setWipeTitle(titleOf(route))
-    const el = wipe.current!
-    animate(el, { y: ['130%', '0%'] }, { duration: .55, ease: [.76, 0, .24, 1] }).then(() => {
-      setShown(route); document.querySelector('.view')?.scrollTo(0, 0)
-      animate(el, { y: ['0%', '-130%'] }, { duration: .7, delay: .22, ease: [.76, 0, .24, 1] })
-    })
-  }, [route, shown])
+    if (route === shown || busy.current) return
+    busy.current = true
+    const el = curtain.current!
+    const ease = [.76, 0, .24, 1] as const
+    animate(el, { clipPath: ['inset(100% 0 0 0)', 'inset(0% 0 0 0)'] }, { duration: .7, ease }).then(() => {
+      setShown(useStore.getState().route)
+      return animate(el, { clipPath: ['inset(0 0 0% 0)', 'inset(0 0 100% 0)'] }, { duration: .8, delay: .35, ease })
+    }).then(() => { busy.current = false; setTick((t) => t + 1) })
+  }, [route, shown, tick])
 
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); set({ palette: !useStore.getState().palette }) }
       if (e.key === 'Escape') {
         const s = useStore.getState()
-        if (s.palette || s.legend) set({ palette: false, legend: false })
+        if (s.palette || s.legend || s.menu) set({ palette: false, legend: false, menu: false })
         else if (s.selected) set({ selected: null })
         else if (s.route !== 'map') setRoute('map')
       }
@@ -53,17 +56,24 @@ export default function App() {
   }, [set, setRoute])
 
   const View = VIEWS[shown]
+  const nav = ALL_NAV[idx]
   return (
     <>
-      <div id="grain" aria-hidden="true" />
-      <Hud /><Rail />
       <main id="views"><View key={shown} /></main>
-      <div id="wipe" ref={wipe} aria-hidden="true">
-        <svg viewBox="0 0 1600 140" preserveAspectRatio="none"><path d={'M0 140 V60 ' + Array.from({ length: 8 }, (_, i) => `Q${i * 200 + 100} ${i % 2 ? 100 : 20} ${i * 200 + 200} 60`).join(' ') + ' V140Z'} /></svg>
-        <div className="body"><span>{wipeTitle}</span></div>
+      <Hud />
+      {(shown === 'map' || shown === 'deck') && <p className="corner-note mono">Example data · a draft, never a verdict</p>}
+      <AnimatePresence>{menu && <Menu />}</AnimatePresence>
+      <div id="curtain" ref={curtain} aria-hidden="true">
+        <div className="c-in">
+          <p className="c-n eyebrow"><i />{pad(idx + 1)} / {pad(ALL_NAV.length)}<i /></p>
+          <p className="c-t">{nav?.label}</p>
+        </div>
+        <div className="c-foot mono"><span>{nav?.sec}</span><span>{nav?.desc}</span></div>
       </div>
-      <Toasts /><Palette /><Legend /><Tour /><Cursor />
+      <Toasts /><Palette /><Legend /><Tour />
       <AnimatePresence>{intro && <Intro onDone={() => { try { sessionStorage.setItem('intro', '1') } catch { /* ok */ } set({ intro: false }) }} />}</AnimatePresence>
+      <div id="grain" aria-hidden="true" />
+      <Cursor />
     </>
   )
 }

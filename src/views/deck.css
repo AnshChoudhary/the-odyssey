@@ -1,0 +1,55 @@
+/* ================================================================ the deck */
+.deck { overflow: hidden; background: var(--ink); }
+.deck-grid { position: absolute; inset: 0; pointer-events: none; opacity: .5;
+  background-image: linear-gradient(var(--hair) 1px, transparent 1px), linear-gradient(90deg, var(--hair) 1px, transparent 1px), linear-gradient(rgba(233,228,216,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(233,228,216,.05) 1px, transparent 1px);
+  background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px; background-position: -1px -1px;
+  mask-image: radial-gradient(ellipse 70% 70% at 40% 50%, #000 30%, transparent 85%); }
+.deck-head { position: absolute; left: var(--pad); top: 104px; z-index: 2; max-width: 420px; pointer-events: none; }
+.deck-head h1 { font: 400 clamp(64px, 7vw, 112px)/.86 var(--serif); letter-spacing: -.04em; margin: 16px 0 18px; }
+.deck-head h1 .mask { display: inline-block; overflow: hidden; padding-bottom: .08em; }
+.deck-head h1 span span { display: inline-block; }
+.deck-head h1 em { font-style: italic; }
+.deck-head .lede { color: var(--bone-2); max-width: 30em; font-size: 14.5px; }
+.deck-stage { position: absolute; inset: 270px 440px 40px var(--pad); }
+.deck-stage svg { width: 100%; height: 100%; overflow: visible; }
+.deck .micro { font: 500 11px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; fill: var(--bone); opacity: .5; }
+.crew-n { font: italic 400 25px/1 var(--serif); fill: var(--bone); }
+.crew-id { font: 500 12px/1 var(--mono); fill: var(--bone); letter-spacing: .05em; }
+.crew { cursor: pointer; transition: opacity .4s; }
+.crew .node { fill: var(--ink); stroke: var(--bone); stroke-width: 1; transition: fill .3s, stroke .3s; }
+.crew:hover .node, .crew.sel .node { fill: var(--bone); }
+.crew:hover .crew-id, .crew.sel .crew-id { fill: var(--ink); }
+.crew.sel .node { stroke: var(--signal); }
+.crew.dim { opacity: .35; }
+.bond-line.on { stroke-dasharray: 4 4; animation: route 3s linear infinite; }
+.you-ring { transform-box: fill-box; transform-origin: center; animation: sring 3s var(--ease) infinite; }
+
+.manifest { position: absolute; z-index: 3; top: 88px; right: var(--pad); bottom: 44px; width: 384px; overflow: auto; background: rgba(12, 16, 21, .78); backdrop-filter: blur(16px); border: 1px solid var(--hair); scrollbar-width: none; }
+.m-card { padding: 28px; display: flex; flex-direction: column; gap: 18px; min-height: 100%; }
+.m-card h2 { font: 400 46px/1 var(--serif); letter-spacing: -.02em; }
+.m-card .why { font: 400 20px/1.35 var(--serif); color: var(--bone); }
+.bond { display: inline-flex; align-items: center; gap: 4px; }
+.bond i { width: 18px; height: 3px; background: var(--hair-2); }
+.bond i.on { background: var(--bone); }
+.bond small { margin-left: 12px; color: var(--bone-3); }
+.bond.sm i { width: 10px; height: 2px; }
+.ints { list-style: none; border-top: 1px solid var(--hair); }
+.ints li { display: grid; grid-template-columns: 64px 1fr auto; gap: 10px; align-items: baseline; padding: 11px 0; border-bottom: 1px solid var(--hair); font-size: 14px; color: var(--bone-2); }
+.ints .src { color: var(--bone-3); font-size: 9.5px; }
+.ints .w { color: var(--bone-3); font-size: 9.5px; }
+.roster { list-style: none; border-top: 1px solid var(--hair); }
+.roster button { width: 100%; display: grid; grid-template-columns: 30px 1fr auto; align-items: center; gap: 10px; padding: 14px 0; border-bottom: 1px solid var(--hair); text-align: left; }
+.roster .k { color: var(--bone-3); }
+.roster .nm { display: flex; flex-direction: column; gap: 3px; }
+.roster b { font: 400 21px/1.1 var(--serif); font-weight: 400; transition: transform .5s var(--ease); display: inline-block; }
+.roster small { color: var(--bone-3); font-size: 9.5px; }
+.roster button:hover b { transform: translateX(6px); font-style: italic; }
+.m-card .fine { font-size: 9.5px; line-height: 1.9; margin-top: auto; }
+.m-card .btn.wide { width: 100%; justify-content: flex-start; }
+.m-card .link { align-self: flex-start; margin-top: auto; }
+
+@media (max-width: 1100px) { .deck-stage { inset: 260px 0 46vh 0; } .manifest { top: auto; left: 12px; right: 12px; bottom: 12px; width: auto; max-height: 44vh; } .deck-head { top: 80px; } .deck-head h1 { font-size: 56px; } }
+.deck svg text { paint-order: stroke; stroke: var(--ink); stroke-width: 5px; stroke-linejoin: round; }
+.deck svg .crew-n { stroke-width: 7px; }
+.deck svg [tabindex]:focus { outline: none; }
+.deck svg [tabindex]:focus-visible .node { stroke: var(--signal); stroke-width: 2; }

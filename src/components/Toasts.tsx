@@ -7,10 +7,11 @@ export function Toasts() {
     <div id="toasts" aria-live="polite">
       <AnimatePresence>
         {toasts.map((t) => (
-          <motion.div key={t.id} className="toast glass" layout initial={{ opacity: 0, x: 60, scale: .95 }} animate={{ opacity: 1, x: 0, scale: 1 }} exit={{ opacity: 0, x: 60 }} transition={{ type: 'spring', stiffness: 380, damping: 30 }}>
-            <span className="ico" aria-hidden="true">{t.icon ?? '🦉'}</span>
-            <div><b>{t.title}</b>{t.body && <p>{t.body}</p>}</div>
-            <button className="x" onClick={() => dismissToast(t.id)} aria-label="Dismiss">×</button>
+          <motion.div key={t.id} className="toast" layout initial={{ opacity: 0, y: 24, clipPath: 'inset(100% 0 0 0)' }} animate={{ opacity: 1, y: 0, clipPath: 'inset(0% 0 0 0)' }} exit={{ opacity: 0, x: -30 }} transition={{ duration: .7, ease: [.22, 1, .36, 1] }}>
+            <b>{t.title}</b>
+            <button className="x" onClick={() => dismissToast(t.id)} aria-label="Dismiss">Close</button>
+            {t.body && <p>{t.body}</p>}
+            <motion.i className="bar" initial={{ scaleX: 1 }} animate={{ scaleX: 0 }} transition={{ duration: 4.8, ease: 'linear' }} />
           </motion.div>
         ))}
       </AnimatePresence>

@@ -2,10 +2,11 @@ import { create } from 'zustand'
 import { ViewId, NOW_WEEK, ISLANDS, SHIPPED, SHIPPED_COUNT, Island, IslandKind } from './data'
 
 export type IslandStatus = 'rescued' | 'dismissed' | 'done'
-export interface Toast { id: number; title: string; body?: string; icon?: string }
+export interface Toast { id: number; title: string; body?: string }
 
 interface State {
   route: ViewId
+  shown: ViewId
   week: number
   priv: boolean
   selected: string | null
@@ -21,6 +22,7 @@ interface State {
   tour: number
   legend: boolean
   palette: boolean
+  menu: boolean
   setRoute: (r: ViewId) => void
   setWeek: (w: number) => void
   setPriv: (b: boolean) => void
@@ -31,7 +33,7 @@ interface State {
   confirm: (id: string, v?: boolean) => void
   trial: (id: string, patch: Partial<{ confirmed: boolean; title: string; story: string }>) => void
   setEpic: (e: string | null) => void
-  toast: (title: string, body?: string, icon?: string) => void
+  toast: (title: string, body?: string) => void
   dismissToast: (id: number) => void
   set: (p: Partial<State>) => void
 }
@@ -47,6 +49,7 @@ const seenL = (k: string) => { try { return localStorage.getItem(k) === '1' } ca
 
 export const useStore = create<State>((set, get) => ({
   route: parseHash(),
+  shown: parseHash(),
   week: NOW_WEEK,
   priv: true,
   selected: null,
@@ -62,7 +65,8 @@ export const useStore = create<State>((set, get) => ({
   tour: seenL('tour') ? -1 : 0,
   legend: false,
   palette: false,
-  setRoute: (route) => { if (location.hash !== '#/' + route) location.hash = '/' + route; set({ route, selected: null }) },
+  menu: false,
+  setRoute: (route) => { if (location.hash !== '#/' + route) location.hash = '/' + route; set({ route, selected: null, menu: false }) },
   setWeek: (w) => set({ week: Math.min(NOW_WEEK, Math.max(40, w)), selected: null }),
   setPriv: (priv) => set({ priv, selected: null }),
   select: (selected) => set({ selected }),
@@ -72,9 +76,9 @@ export const useStore = create<State>((set, get) => ({
   confirm: (id, v = true) => set((st) => ({ confirmed: { ...st.confirmed, [id]: v } })),
   trial: (id, p) => set((st) => ({ trials: { ...st.trials, [id]: { ...(st.trials[id] ?? { confirmed: false }), ...p } } })),
   setEpic: (epic) => set({ epic }),
-  toast: (title, body, icon) => {
+  toast: (title, body) => {
     const id = tid++
-    set((st) => ({ toasts: [...st.toasts, { id, title, body, icon }].slice(-3) }))
+    set((st) => ({ toasts: [...st.toasts, { id, title, body }].slice(-3) }))
     setTimeout(() => get().dismissToast(id), 4800)
   },
   dismissToast: (id) => set((st) => ({ toasts: st.toasts.filter((t) => t.id !== id) })),
@@ -86,7 +90,7 @@ export interface LiveIsland extends Island { state: IslandKind; label: string }
 export const liveIslands = (week: number, status: Record<string, IslandStatus>, names: Record<string, string>): LiveIsland[] =>
   ISLANDS.filter((i) => i.born <= week && !status[i.id] || (status[i.id] === 'rescued' && i.born <= week))
     .map((i) => {
-      const age = i.age - 7 * (NOW_WEEK - week)
+      const age = Math.max(1, i.age - 7 * (NOW_WEEK - week))
       let state: IslandKind = i.kind
       if (i.kind === 'sinking' && age < 12) state = 'active'
       if (i.kind === 'overdue' && week < NOW_WEEK - 1 && age < 2) state = 'active'
@@ -102,5 +106,5 @@ export const shippedCount = (week: number, extra: number) => SHIPPED_COUNT[week]
 
 window.addEventListener('hashchange', () => {
   const r = parseHash()
-  if (r !== useStore.getState().route) useStore.setState({ route: r, selected: null })
+  if (r !== useStore.getState().route) useStore.setState({ route: r, selected: null, menu: false })
 })

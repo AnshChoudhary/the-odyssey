@@ -1,20 +1,28 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ISLANDS, ROUTES, SHIPPED, VOYAGE, COUNSEL, NOW_WEEK } from '../data'
+import { ROUTES, SHIPPED, VOYAGE, COUNSEL, NOW_WEEK, TRACK, HEADLINE, WEEKS } from '../data'
 import { LiveIsland, landmarks, liveIslands, shippedCount, useStore } from '../store'
-import { blob, hash, rng, useCountUp, useTypewriter } from '../lib'
+import { NM_PER_UNIT, blob, contour, fmtLat, fmtLon, hash, noise3, pad, rng, useCountUp, useTypewriter } from '../lib'
 
 const W = 1600, H = 1000
-const SHIP = { x: 770, y: 585 }
+const ROSE = { x: 1092, y: 640 }
 let counselShown = false
+const NS = { vectorEffect: 'non-scaling-stroke' } as const
+
+/* ------------------------------------------------------------------ coast */
+const CS = 10
+const COAST: [number, number][] = (() => { const p: [number, number][] = []; for (let y = -60; y <= H + 60; y += CS) p.push([396 + Math.sin(y / 150) * 24 + noise3(.5, y * .011, 3) * 34 + noise3(.5, y * .045, 7) * 7, y]); return p })()
+const coastX = (y: number) => { const i = Math.max(0, Math.min(COAST.length - 2, Math.floor((y + 60) / CS))); const [x0, y0] = COAST[i], [x1] = COAST[i + 1]; const t = (y - y0) / CS; return x0 + (x1 - x0) * t }
 
 /* ------------------------------------------------------------------ camera */
-function useCamera(stage: React.RefObject<HTMLDivElement>, world: React.RefObject<HTMLDivElement>) {
-  const cur = useRef({ x: 0, y: 0, k: 1 }), tgt = useRef({ x: 0, y: 0, k: 1 })
+type Cam = { x: number; y: number; k: number }
+function useCamera(stage: React.RefObject<HTMLDivElement>, world: React.RefObject<HTMLDivElement>, onFrame: (c: Cam, moving: boolean, t: number) => void) {
+  const cur = useRef<Cam>({ x: 0, y: 0, k: 1 }), tgt = useRef<Cam>({ x: 0, y: 0, k: 1 })
+  const frame = useRef(onFrame); frame.current = onFrame
   const cover = () => { const s = stage.current!; return Math.max(s.clientWidth / W, s.clientHeight / H) }
-  const clamp = useCallback((c: { x: number; y: number; k: number }) => {
+  const clamp = useCallback((c: Cam) => {
     const s = stage.current!, kc = cover()
-    c.k = Math.min(kc * 4.5, Math.max(kc * 0.62, c.k))
+    c.k = Math.min(kc * 4.5, Math.max(kc * 0.7, c.k))
     const fx = (lo: number, v: number) => (lo > 0 ? lo / 2 : Math.min(0, Math.max(lo, v)))
     c.x = fx(s.clientWidth - W * c.k, c.x); c.y = fx(s.clientHeight - H * c.k, c.y)
     return c
@@ -25,27 +33,28 @@ function useCamera(stage: React.RefObject<HTMLDivElement>, world: React.RefObjec
     const s = stage.current!
     tgt.current = clamp({ k, x: s.clientWidth / 2 - offX - wx * k, y: s.clientHeight / 2 - wy * k })
   }, [clamp, stage])
-  const fitK = useRef(0)
-  const fit = useCallback(() => { fitK.current = cover() * 1.001; focus(W / 2, H / 2, fitK.current); auto.current = true }, [focus])
+  const fit = useCallback(() => { focus(W / 2, H / 2, cover() * 1.001); auto.current = true }, [focus])
   const zoomBy = useCallback((f: number, px?: number, py?: number) => {
     auto.current = false
     const s = stage.current!, t = tgt.current
     px ??= s.clientWidth / 2; py ??= s.clientHeight / 2
-    const nk = Math.min(cover() * 4.5, Math.max(cover() * 0.62, t.k * f)), r = nk / t.k
+    const nk = Math.min(cover() * 4.5, Math.max(cover() * 0.7, t.k * f)), r = nk / t.k
     tgt.current = clamp({ k: nk, x: px - (px - t.x) * r, y: py - (py - t.y) * r })
   }, [clamp, stage])
 
   useEffect(() => {
     const s = stage.current!
     fit(); const t = tgt.current
-    /* arrival: start zoomed on the ship and ease out to the full chart */
-    const kc = cover(); cur.current = clamp({ k: kc * 3, x: s.clientWidth / 2 - SHIP.x * kc * 3, y: s.clientHeight / 2 - SHIP.y * kc * 3 }); tgt.current = t
+    /* arrival: start low over the ship and pull back to the whole chart */
+    const kc = cover(), [sx, sy] = TRACK[NOW_WEEK]
+    cur.current = clamp({ k: kc * 2.6, x: s.clientWidth / 2 - sx * kc * 2.6, y: s.clientHeight / 2 - sy * kc * 2.6 }); tgt.current = t
     let raf = 0
-    const tick = () => {
-      const c = cur.current, g = tgt.current, e = 0.11
+    const tick = (now: number) => {
+      const c = cur.current, g = tgt.current, e = 0.085
+      const moving = Math.abs(g.x - c.x) + Math.abs(g.y - c.y) + Math.abs(g.k - c.k) * 400 > 0.05
       c.x += (g.x - c.x) * e; c.y += (g.y - c.y) * e; c.k += (g.k - c.k) * e
       world.current!.style.transform = `translate3d(${c.x}px,${c.y}px,0) scale(${c.k})`
-      s.style.setProperty('--px', String(c.x * 0.02)); s.style.setProperty('--py', String(c.y * 0.02))
+      frame.current(c, moving, now)
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
@@ -56,110 +65,234 @@ function useCamera(stage: React.RefObject<HTMLDivElement>, world: React.RefObjec
   return { cur, tgt, focus, fit, zoomBy, clamp, cover, auto }
 }
 
+/* ---------------------------------------------------- bathymetry (canvas) */
+type Bump = { x: number; y: number; r: number; a: number; to: number }
+function useSea(canvas: React.RefObject<HTMLCanvasElement>) {
+  const st = useRef({ w: 0, h: 0, d: 1, cols: 0, rows: 0, v: new Float32Array(0), last: 0, lastCam: '' })
+  const bumps = useRef(new Map<string, Bump>())
+  useEffect(() => {
+    const c = canvas.current!
+    const fit = () => { const s = st.current; s.d = Math.min(1.5, devicePixelRatio || 1); s.w = c.clientWidth; s.h = c.clientHeight; c.width = s.w * s.d; c.height = s.h * s.d; s.lastCam = '' }
+    fit(); const ro = new ResizeObserver(fit); ro.observe(c); return () => ro.disconnect()
+  }, [canvas])
+  const draw = useCallback((cam: Cam, moving: boolean, now: number) => {
+    const s = st.current, c = canvas.current; if (!c || !s.w) return
+    let settling = false
+    bumps.current.forEach((b, id) => { const d = b.to - b.a; if (Math.abs(d) > .002) { b.a += d * .05; settling = true } else if (b.to === 0) bumps.current.delete(id) })
+    if (!moving && !settling && now - s.last < 66) return
+    s.last = now
+    const g = c.getContext('2d')!
+    g.setTransform(s.d, 0, 0, s.d, 0, 0)
+    const cs = moving ? 13 : 10
+    const cols = Math.ceil(s.w / cs) + 2, rows = Math.ceil(s.h / cs) + 2
+    if (s.v.length < cols * rows) s.v = new Float32Array(cols * rows)
+    const v = s.v, z = now * 0.000028, bs = [...bumps.current.values()]
+    for (let y = 0; y < rows; y++) {
+      const wy = (y * cs - cam.y) / cam.k, cxw = coastX(wy)
+      for (let x = 0; x < cols; x++) {
+        const wx = (x * cs - cam.x) / cam.k
+        let f = -0.62 + noise3(wx * 0.0032, wy * 0.0032, z) * 0.3 + noise3(wx * 0.011, wy * 0.011, z * 1.5) * 0.07
+        f += 1.35 / (1 + Math.exp(-(cxw - wx) / 46))
+        for (const b of bs) { const dx = (wx - b.x) / 1.25, dy = (wy - b.y) / 0.9, rr = b.r * 1.15; f += b.a * Math.exp(-(dx * dx + dy * dy) / (2 * rr * rr)) }
+        v[y * cols + x] = f
+      }
+    }
+    g.clearRect(0, 0, s.w, s.h)
+    /* land */
+    g.save(); g.beginPath()
+    for (let wy = -60; wy <= H + 60; wy += CS) { const px = coastX(wy) * cam.k + cam.x, py = wy * cam.k + cam.y; wy === -60 ? g.moveTo(px, py) : g.lineTo(px, py) }
+    g.lineTo(-2000 * cam.k + cam.x, (H + 60) * cam.k + cam.y); g.lineTo(-2000 * cam.k + cam.x, -60 * cam.k + cam.y); g.closePath()
+    g.fillStyle = '#10151b'; g.fill()
+    g.lineWidth = 1.1; g.strokeStyle = 'rgba(233,228,216,.62)'; g.stroke()
+    g.clip()
+    g.lineWidth = .7
+    for (let i = 0; i < 13; i++) { g.strokeStyle = `rgba(233,228,216,${i % 4 === 0 ? .2 : .1})`; contour(g, v, cols, rows, cs, 0.16 + i * 0.085) }
+    g.restore()
+    /* sea */
+    g.save(); g.beginPath(); g.rect(0, 0, s.w, s.h)
+    for (let wy = -60; wy <= H + 60; wy += CS) { const px = coastX(wy) * cam.k + cam.x, py = wy * cam.k + cam.y; wy === -60 ? g.moveTo(px, py) : g.lineTo(px, py) }
+    g.lineTo(-2000 * cam.k + cam.x, (H + 60) * cam.k + cam.y); g.lineTo(-2000 * cam.k + cam.x, -60 * cam.k + cam.y); g.closePath()
+    g.clip('evenodd')
+    g.lineWidth = .8
+    for (let i = 0; i < 9; i++) {
+      const lv = -0.6 + i * 0.07
+      g.strokeStyle = `rgba(160,190,202,${(i % 3 === 2 ? .2 : .1) + i * .012})`
+      contour(g, v, cols, rows, cs, lv)
+    }
+    g.restore()
+  }, [canvas])
+  return { draw, bumps }
+}
+
 /* -------------------------------------------------------------- chart art */
-const Mountains = ({ x, y }: { x: number; y: number }) => (
-  <g transform={`translate(${x},${y})`} fill="#c6a56a" stroke="#5b4630" strokeWidth="2" strokeLinejoin="round">
-    <path d="M0 0 L26 -48 L52 0Z" /><path d="M40 0 L72 -66 L104 0Z" /><path d="M96 0 L118 -38 L140 0Z" />
-    <path d="M26 -48 l-8 14 8 -4 6 6z" fill="#efdcae" stroke="none" /><path d="M72 -66 l-10 18 10 -5 8 6z" fill="#efdcae" stroke="none" />
-  </g>
-)
-const Compass = ({ x, y }: { x: number; y: number }) => (
-  <g transform={`translate(${x},${y})`} className="compass">
-    <circle r="86" fill="none" stroke="#5b4630" strokeWidth="2" /><circle r="72" fill="none" stroke="#5b4630" strokeWidth="1" strokeDasharray="2 5" />
-    <g className="rose"><path d="M0 -84 L12 -12 L0 0 L-12 -12Z" fill="#b4432d" /><path d="M0 84 L12 12 L0 0 L-12 12Z" fill="#5b4630" /><path d="M-84 0 L-12 -12 L0 0 L-12 12Z" fill="#8a6a3d" /><path d="M84 0 L12 -12 L0 0 L12 12Z" fill="#8a6a3d" />
-      <path d="M-40 -40 L-6 -6 M40 -40 L6 -6 M-40 40 L-6 6 M40 40 L6 6" stroke="#5b4630" strokeWidth="2" /></g>
-    <text y="-96" textAnchor="middle" className="cap-t">N</text>
-  </g>
-)
-const Dragon = ({ x, y }: { x: number; y: number }) => (
-  <g transform={`translate(${x},${y})`} className="dragon" opacity=".5" fill="none" stroke="#5b4630" strokeWidth="2.4" strokeLinecap="round">
-    <path d="M0 40 q20 -60 50 -20 t50 -10 t50 -4" /><path d="M150 6 q22 -26 8 -42 q-20 -4 -20 14" /><circle cx="150" cy="-20" r="2" fill="#5b4630" />
-    <path d="M30 22 q10 20 26 10 M80 0 q8 22 24 14 M-30 52 q16 -20 32 -6" />
-    <text x="0" y="94" className="hand-t" fill="#5b4630" stroke="none">here be dragons</text>
-  </g>
-)
-const Waves = memo(function Waves() {
-  const r = rng(11)
-  const marks = Array.from({ length: 54 }, () => ({ x: 430 + r() * 1100, y: 40 + r() * 920, s: 0.7 + r() * 0.8, d: r() * 6 }))
-  return <g fill="none" stroke="#7d6544" strokeWidth="1.6" strokeLinecap="round" opacity=".55">
-    {marks.map((m, i) => <path key={i} className="wv" style={{ animationDelay: `${m.d}s` }} transform={`translate(${m.x},${m.y}) scale(${m.s})`} d="M0 0 q8 -9 16 0 t16 0 t16 0" />)}
+const Rose = memo(function Rose() {
+  const R = 58
+  return (
+    <g transform={`translate(${ROSE.x},${ROSE.y})`} className="rose" fill="none" stroke="var(--bone)">
+      <circle r={R} strokeWidth=".8" {...NS} opacity=".7" /><circle r={R - 9} strokeWidth=".5" {...NS} opacity=".5" />
+      {Array.from({ length: 72 }, (_, i) => { const a = (i * 5 * Math.PI) / 180, l = i % 18 === 0 ? 12 : i % 2 === 0 ? 7 : 4; return <path key={i} d={`M${Math.sin(a) * R} ${-Math.cos(a) * R} L${Math.sin(a) * (R - l)} ${-Math.cos(a) * (R - l)}`} strokeWidth=".6" {...NS} opacity=".7" /> })}
+      {Array.from({ length: 8 }, (_, i) => { const a = (i * 45 * Math.PI) / 180, l = i % 2 ? R * .55 : R - 12, w = i % 2 ? 4 : 6.5; const px = Math.sin(a), py = -Math.cos(a), qx = Math.cos(a), qy = Math.sin(a)
+        return <g key={i}><path d={`M0 0 L${px * l} ${py * l} L${qx * w} ${qy * w}Z`} fill={i === 0 ? 'var(--signal)' : 'var(--bone)'} stroke="none" opacity={i === 0 ? 1 : .8} /><path d={`M0 0 L${px * l} ${py * l} L${-qx * w} ${-qy * w}Z`} strokeWidth=".6" {...NS} fill="var(--ink)" /></g> })}
+      <circle r="2.4" fill="var(--bone)" stroke="none" />
+      <text y={-R - 8} textAnchor="middle" className="rose-n">N</text>
+      <text y={R + 18} textAnchor="middle" className="micro">VAR 4°E · 2026</text>
+    </g>
+  )
+})
+
+const Rhumbs = memo(function Rhumbs() {
+  return <g stroke="var(--bone)" strokeWidth=".5" opacity=".075" {...NS}>
+    {Array.from({ length: 32 }, (_, i) => { const a = (i / 32) * Math.PI * 2; return <path key={i} d={`M${ROSE.x} ${ROSE.y} L${ROSE.x + Math.cos(a) * 2400} ${ROSE.y + Math.sin(a) * 2400}`} {...NS} /> })}
   </g>
 })
 
-const Ship = ({ onBoard }: { onBoard: () => void }) => (
-  <g transform={`translate(${SHIP.x},${SHIP.y})`} className="ship" role="button" tabIndex={0} aria-label="Board your ship" data-ship data-cursor="Board" onKeyDown={(e) => e.key === 'Enter' && onBoard()}>
-    <ellipse cx="0" cy="22" rx="86" ry="12" className="wake" fill="none" stroke="#5b4630" strokeWidth="1.5" />
-    <ellipse cx="0" cy="22" rx="56" ry="7" className="wake w2" fill="none" stroke="#5b4630" strokeWidth="1.2" />
-    <g className="ship-body">
-      <path d="M-44 0 Q-22 22 22 22 Q40 20 52 -6 L-40 -6Z" fill="#7a5530" stroke="#3a2a1a" strokeWidth="2.4" strokeLinejoin="round" />
-      <path d="M-34 6 H40" stroke="#3a2a1a" strokeWidth="1" opacity=".6" />
-      <path d="M0 -6 V-78" stroke="#3a2a1a" strokeWidth="3" />
-      <path className="sail" d="M3 -74 Q46 -50 38 -12 L3 -10Z" fill="#f4e8c8" stroke="#3a2a1a" strokeWidth="2" strokeLinejoin="round" />
-      <path className="sail s2" d="M-3 -66 Q-30 -46 -26 -12 L-3 -10Z" fill="#ead9ae" stroke="#3a2a1a" strokeWidth="2" strokeLinejoin="round" />
-      <path d="M0 -78 l20 -6 -20 -6z" fill="#b4432d" stroke="#3a2a1a" strokeWidth="1.2" />
-    </g>
-    <text y="58" textAnchor="middle" className="hand-t ship-cap">click to board</text>
+const Graticule = memo(function Graticule() {
+  const xs = Array.from({ length: 15 }, (_, i) => (i + 1) * 100), ys = Array.from({ length: 9 }, (_, i) => (i + 1) * 100)
+  return <g className="grat">
+    <g stroke="var(--bone)" strokeWidth=".5" opacity=".07">{xs.map((x) => <path key={x} d={`M${x} 0V${H}`} {...NS} />)}{ys.map((y) => <path key={y} d={`M0 ${y}H${W}`} {...NS} />)}</g>
+    {xs.filter((x) => x % 200 === 0 && x > 400).map((x) => <text key={x} x={x + 4} y={H - 8} className="micro">{fmtLon(x)}</text>)}
+    {ys.filter((y) => y % 200 === 0).map((y) => <text key={y} x={coastX(y) + 12} y={y - 4} className="micro">{fmtLat(y)}</text>)}
   </g>
-)
+})
 
-function Storm({ r, seed }: { r: number; seed: string }) {
-  const d = (hash(seed) % 5) * 0.7
+const Soundings = memo(function Soundings({ avoid }: { avoid: { x: number; y: number; r: number }[] }) {
+  const pts = useMemo(() => {
+    const r = rng(19), out: { x: number; y: number; d: number }[] = []
+    for (let i = 0; i < 400 && out.length < 74; i++) {
+      const x = 430 + r() * 1150, y = 90 + r() * 880
+      if (x < coastX(y) + 34) continue
+      if (avoid.some((a) => Math.hypot((x - a.x) / 1.25, (y - a.y) / .9) < a.r * 1.7 + 40)) continue
+      if (Math.hypot(x - ROSE.x, y - ROSE.y) < 90) continue
+      if (out.some((o) => Math.hypot(o.x - x, o.y - y) < 46)) continue
+      out.push({ x, y, d: Math.round(8 + r() * 70 + (x - 400) / 30) })
+    }
+    return out
+  }, [avoid])
+  return <g className="soundings">{pts.map((p, i) => <text key={i} x={p.x} y={p.y}>{p.d}<tspan dy="3" fontSize="7">{(p.d * 7) % 9}</tspan></text>)}</g>
+})
+
+function Track({ week }: { week: number }) {
+  const weeks = Object.keys(TRACK).map(Number).filter((w) => w <= week)
+  const pts = weeks.map((w) => TRACK[w])
+  const d = pts.map((p, i) => (i ? 'L' : 'M') + p[0] + ' ' + p[1]).join(' ')
   return (
-    <g className="storm" transform={`translate(${r * 0.2},${-r - 38})`}>
-      <g className="cloud" style={{ animationDelay: `${-d}s` }}>
-        <ellipse cx="0" cy="0" rx="42" ry="17" fill="#7c7a78" /><circle cx="-18" cy="-10" r="17" fill="#858381" /><circle cx="8" cy="-16" r="21" fill="#8f8d8a" /><circle cx="28" cy="-6" r="14" fill="#858381" />
-      </g>
-      {[-18, -4, 12, 26].map((x, i) => <path key={x} className="rain" style={{ animationDelay: `${i * 0.18}s` }} d={`M${x} 18 l-6 18`} stroke="#4c6671" strokeWidth="2" strokeLinecap="round" />)}
-      <path className="bolt" style={{ animationDelay: `${d}s` }} d="M6 14 l-8 16 8 -2 -6 18" fill="none" stroke="#f4cf5a" strokeWidth="3" strokeLinejoin="round" strokeLinecap="round" />
+    <g className="track">
+      <path d={d} fill="none" stroke="var(--bone)" strokeWidth=".9" strokeDasharray="5 4" opacity=".55" {...NS} />
+      {weeks.slice(0, -1).map((w) => <g key={w} transform={`translate(${TRACK[w][0]},${TRACK[w][1]})`}>
+        <circle r="3.4" fill="var(--ink)" stroke="var(--bone)" strokeWidth=".8" {...NS} opacity=".8" /><text x="8" y="-6" className="micro">W{w}</text></g>)}
     </g>
   )
 }
 
-const IslandArt = memo(function IslandArt({ isl, selected, onBurst }: { isl: LiveIsland; selected: boolean; onBurst?: () => void }) {
-  void onBurst
+function Ship({ week, onBoard }: { week: number; onBoard: () => void }) {
+  const ws = Object.keys(TRACK).map(Number).filter((w) => w <= week)
+  const [x, y] = TRACK[week], prev = TRACK[ws[ws.length - 2]] ?? [x - 60, y + 10]
+  const hd = (Math.atan2(y - prev[1], x - prev[0]) * 180) / Math.PI
+  return (
+    <motion.g className="ship" initial={false} animate={{ x, y }} transition={{ duration: 1.4, ease: [.65, 0, .35, 1] }}
+      role="button" tabIndex={0} aria-label="Board your ship and meet the crew" data-ship data-cursor="Board" onKeyDown={(e) => e.key === 'Enter' && onBoard()}>
+      <circle r="34" className="ship-hit" />
+      <circle r="20" className="ship-ring" fill="none" stroke="var(--bone)" strokeWidth=".8" {...NS} />
+      <circle r="20" className="ship-ring r2" fill="none" stroke="var(--bone)" strokeWidth=".8" {...NS} />
+      <motion.g animate={{ rotate: hd }} transition={{ duration: 1.4 }}>
+        <path d="M40 0 H90" stroke="var(--bone)" strokeWidth=".8" strokeDasharray="2 4" {...NS} opacity=".7" />
+        <path d="M16 0 C 8 -6, -6 -7, -14 -5 L -14 5 C -6 7, 8 6, 16 0Z" fill="var(--bone)" />
+        <path d="M-14 -5 L-14 5" stroke="var(--ink)" strokeWidth="1" />
+      </motion.g>
+      <text x="0" y="40" textAnchor="middle" className="ship-t">You · W{week}</text>
+      <text x="0" y="54" textAnchor="middle" className="micro ship-sub">board the ship</text>
+    </motion.g>
+  )
+}
+
+const Ring = ({ id, r, s, w, o }: { id: string; r: number; s: number; w: number; o: number }) => <path d={blob(id + s, r * s, .3, 16)} fill="none" stroke="currentColor" strokeWidth={w} opacity={o} {...NS} />
+
+const IslandArt = memo(function IslandArt({ isl, selected }: { isl: LiveIsland; selected: boolean }) {
   const d = useMemo(() => blob(isl.id, isl.r), [isl.id, isl.r])
-  const d2 = useMemo(() => blob(isl.id + 'x', isl.r * 1.02, 0.2), [isl.id, isl.r])
-  const deco = useMemo(() => { const r = rng(hash(isl.id + 'd')); return Array.from({ length: 4 + Math.floor(isl.r / 18) }, () => ({ x: (r() - .5) * isl.r * 1.3, y: (r() - .5) * isl.r * .8, t: r() > .45 })) }, [isl.id, isl.r])
+  const shoal = useMemo(() => blob(isl.id + 'sh', isl.r * 1.3, .12), [isl.id, isl.r])
+  const rocks = useMemo(() => { const r = rng(hash(isl.id + 'k')); return Array.from({ length: 5 }, () => { const a = r() * Math.PI * 2, k = 1.35 + r() * .2; return [Math.cos(a) * isl.r * 1.25 * k, Math.sin(a) * isl.r * .9 * k] }) }, [isl.id, isl.r])
   const sink = isl.state === 'sinking', over = isl.state === 'overdue'
+  const ex = isl.r * 1.25, ey = isl.r * .9
+  const lx = isl.lab === 'r' ? ex + 16 : isl.lab === 'l' ? -ex - 16 : 0, ly = isl.lab === 'b' ? ey + 26 : -2
+  const anchor = isl.lab === 'r' ? 'start' : isl.lab === 'l' ? 'end' : 'middle'
+  const meta = `${isl.src} · ${isl.age}d${over ? ' · overdue' : ''}${isl.who ? ' · with ' + isl.who.replace('Teammate ', 'T.') : ''}`
   return (
     <g className={`isl ${isl.state}${selected ? ' sel' : ''}`}>
-      <g className="isl-hover">
-        <path d={d} transform="scale(1.18)" className="shoal" />
-        {sink && [1.25, 1.5].map((s, i) => <ellipse key={s} className="ripple" style={{ animationDelay: `${i * 1.4}s` }} rx={isl.r * 1.25} ry={isl.r * .9} fill="none" stroke="#7d6544" strokeWidth="1.5" />)}
-        <path d={d} className="land" stroke={over ? '#b4432d' : '#5b4630'} strokeWidth={over ? 3.6 : 2.4} strokeDasharray={sink ? '5 4' : undefined} />
-        <path d={d2} transform="translate(2,2)" fill="none" stroke={over ? '#b4432d' : '#5b4630'} strokeWidth="1" opacity=".4" />
-        <path d={d} transform="scale(.7)" fill="none" stroke="#5b4630" strokeWidth="1" opacity=".3" />
-        <path d={d} transform="scale(.42)" fill="none" stroke="#5b4630" strokeWidth="1" opacity=".25" />
-        {deco.map((p, i) => p.t
-          ? <path key={i} transform={`translate(${p.x},${p.y})`} d="M0 0 l-5 12 h10z M0 12 v5" fill="#7d9360" stroke="#3a4a2a" strokeWidth="1.2" strokeLinejoin="round" />
-          : <path key={i} transform={`translate(${p.x},${p.y})`} d="M-9 8 l9 -16 l9 16 M-3 0 l3 -5 l3 5" fill="none" stroke="#5b4630" strokeWidth="1.4" strokeLinejoin="round" />)}
-        <g transform={`translate(0,${isl.r * 0.78})`}>
-          <rect x="-26" y="-9" width="52" height="18" rx="9" className={`src src-${isl.src}`} />
-          <text y="4" textAnchor="middle" className="src-t">{isl.src}</text>
-        </g>
-        <text y={isl.r * 0.78 + 36} textAnchor="middle" className={`isl-label${sink ? ' faint' : ''}`}>{sink ? isl.quote.split('·')[0].trim() : isl.label}</text>
-        {over && <text y={isl.r * 0.78 + 58} textAnchor="middle" className="sm-t red">overdue {isl.age}d</text>}
-        {sink && <text y={isl.r * 0.78 + 56} textAnchor="middle" className="sm-t">{isl.src}, {isl.age}d</text>}
+      <ellipse rx={ex * 1.35} ry={ey * 1.35} className="hit" />
+      <path d={shoal} className="shoal" fill="none" strokeWidth=".7" strokeDasharray="1 3.5" strokeLinecap="round" {...NS} />
+      {sink && [0, 1].map((i) => <ellipse key={i} className="ripple" style={{ animationDelay: `${i * 2}s` }} rx={ex} ry={ey} fill="none" stroke="var(--bone)" strokeWidth=".6" {...NS} />)}
+      {over && <g className="danger"><circle r={isl.r * 1.75} fill="none" stroke="var(--signal)" strokeWidth=".8" strokeDasharray="2 5" {...NS} />
+        {rocks.map(([x, y], i) => <g key={i} transform={`translate(${x},${y})`} stroke="var(--signal)" strokeWidth=".8"><path d="M-3.5 0H3.5M0 -3.5V3.5" {...NS} /></g>)}</g>}
+      <g className="land">
+        <path d={d} className="coast" strokeWidth={over ? 1.3 : 1} strokeDasharray={sink ? '4 3' : undefined} {...NS} />
+        {!sink && <path d={d} fill="url(#hatch)" stroke="none" />}
+        <Ring id={isl.id} r={isl.r} s={.74} w={.6} o={.55} /><Ring id={isl.id} r={isl.r} s={.5} w={.6} o={.45} /><Ring id={isl.id} r={isl.r} s={.27} w={.6} o={.4} />
+        <circle r="1.6" fill="currentColor" opacity=".8" />
       </g>
-      {over && <Storm r={isl.r} seed={isl.id} />}
       {isl.flare && (
-        <g transform={`translate(${isl.r * .8},${-isl.r * .9})`}>
-          <circle className="flare-ring" r="12" fill="none" stroke="#e8742c" strokeWidth="2" /><circle r="7" fill="#e8742c" />
-          <text x="14" y="-14" className="sm-t red" transform="rotate(-8)">{isl.flare}</text>
+        <g transform={`translate(${ex * .72},${-ey * .95})`} className="light">
+          <path className="flash" d="M0 0 C-7 -9 -5 -21 0 -24 C5 -21 7 -9 0 0Z" fill="var(--signal)" />
+          <circle r="2.6" fill="var(--bone)" />
+          <text x="10" y="-12" className="micro sig">FL R · 6h</text>
         </g>
       )}
-      {selected && <circle className="sel-ring" r={isl.r * 1.5} fill="none" stroke="#2f6b73" strokeWidth="2.4" strokeDasharray="10 8" />}
+      <g className="label" transform={`translate(${lx},${ly})`}>
+        <text textAnchor={anchor} className="isl-t">{sink ? isl.quote.split('·')[0].trim() : isl.label}{sink && <tspan className="ed"> (E.D.)</tspan>}</text>
+        <text textAnchor={anchor} y="15" className={`micro${over ? ' sig' : ''}`}>{meta}</text>
+      </g>
+      {selected && <g className="brackets" stroke="var(--bone)" strokeWidth="1" fill="none">
+        {[[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([sx, sy]) => <path key={sx + ',' + sy} d={`M${sx * (ex + 22)} ${sy * (ey + 22) - sy * 12} V${sy * (ey + 22)} H${sx * (ex + 22) - sx * 12}`} {...NS} />)}
+      </g>}
     </g>
   )
 })
+
+const Continent = memo(function Continent({ marks, selected, shipped, week }: { marks: { t: string; d: string; isNew: boolean }[]; selected: string | null; shipped: number; week: number }) {
+  return (
+    <g className="continent">
+      <text x="44" y="118" className="cont-t">The Shipped</text>
+      <text x="44" y="160" className="cont-t it">Continent</text>
+      <text x="46" y="190" className="micro">{shipped} landings · week {week}</text>
+      <path d="M46 206 H300" stroke="var(--bone)" strokeWidth=".6" opacity=".35" {...NS} />
+      {marks.map((m, i) => {
+        const x = 56 + (i % 2) * 22, y = 252 + i * 82
+        return (
+          <g key={m.t} data-sh={i} role="button" tabIndex={0} data-cursor="Read" className={`landmark${selected === 'sh:' + i ? ' sel' : ''}${m.isNew ? ' fresh' : ''}`}>
+            <rect x={x - 14} y={y - 20} width="300" height="40" fill="transparent" />
+            {m.isNew && <circle cx={x} cy={y} r="5" className="pulse" fill="none" stroke="var(--brass)" strokeWidth=".8" {...NS} />}
+            <circle cx={x} cy={y} r="5" fill="var(--ink)" stroke="var(--brass)" strokeWidth=".9" {...NS} /><circle cx={x} cy={y} r="1.7" fill="var(--brass)" />
+            <path d={`M${x + 9} ${y} H${x + 22}`} stroke="var(--brass)" strokeWidth=".7" {...NS} opacity=".7" />
+            <text x={x + 28} y={y + 5} className="mark-t">{m.t.replace(/^(Merged|Closed|Shipped|Reviewed): ?/, '')}</text>
+            <text x={x + 28} y={y + 20} className="micro">{(m.t.match(/^(\w+)/)?.[1] ?? 'Shipped')}{m.isNew ? ' · this week' : ''}</text>
+          </g>
+        )
+      })}
+    </g>
+  )
+})
+
+/* ------------------------------------------------------------- landing ring */
+const Landing = ({ x, y }: { x: number; y: number }) => (
+  <g transform={`translate(${x},${y})`} pointerEvents="none">
+    {[0, 1, 2].map((i) => <motion.circle key={i} fill="none" stroke={i ? 'var(--bone)' : 'var(--brass)'} strokeWidth="1" {...NS} initial={{ r: 20, opacity: .9 }} animate={{ r: 160 + i * 40, opacity: 0 }} transition={{ duration: 1.6, delay: i * .18, ease: [.22, 1, .36, 1] }} />)}
+  </g>
+)
 
 /* --------------------------------------------------------------- the view */
 export default function MapView() {
   const st = useStore()
   const { week, priv, selected, status, names, extraShipped, select, setStatus, setRoute } = st
-  const stage = useRef<HTMLDivElement>(null), world = useRef<HTMLDivElement>(null)
-  const cam = useCamera(stage, world)
-  const [bursts, setBursts] = useState<{ id: number; x: number; y: number }[]>([])
+  const stage = useRef<HTMLDivElement>(null), world = useRef<HTMLDivElement>(null), sea = useRef<HTMLCanvasElement>(null)
+  const scaleRef = useRef<HTMLDivElement>(null), coordRef = useRef<HTMLSpanElement>(null)
+  const { draw, bumps } = useSea(sea)
+  const onFrame = useCallback((c: Cam, moving: boolean, t: number) => {
+    draw(c, moving, t)
+    const el = scaleRef.current; if (!el) return
+    const nm = [1, 2, 5, 10, 20].find((n) => (n / NM_PER_UNIT) * c.k > 70) ?? 20
+    el.style.width = `${(nm / NM_PER_UNIT) * c.k}px`; if (el.nextElementSibling) el.nextElementSibling.textContent = `${nm} nautical miles`
+  }, [draw])
+  const cam = useCamera(stage, world, onFrame)
+  const [landings, setLandings] = useState<{ id: number; x: number; y: number }[]>([])
   const drag = useRef({ on: false, moved: 0, x: 0, y: 0, vx: 0, vy: 0, t: 0, isl: '', sh: '', ship: false })
 
   const all = liveIslands(week, status, names)
@@ -167,19 +300,25 @@ export default function MapView() {
   const sel = islands.find((i) => i.id === selected)
   const marks = landmarks(week, extraShipped)
   const selMark = selected?.startsWith('sh:') ? marks[+selected.slice(3)] : null
+  const avoid = useMemo(() => islands.map((i) => ({ x: i.x, y: i.y, r: i.r })), [islands.map((i) => i.id).join()]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* camera follows selection */
+  /* feed the bathymetry: islands raise the sea floor, resolved ones sink back */
   useEffect(() => {
-    const target = sel ?? (selMark && selected ? { x: 190, y: 220 + (+selected.slice(3)) * 110, r: 80 } : null)
-    if (target) cam.focus(target.x, target.y, cam.cover() * 1.75, window.innerWidth > 900 ? 190 : 0)
+    const m = bumps.current, live = new Set(islands.map((i) => i.id))
+    islands.forEach((i) => { const to = i.state === 'sinking' ? .4 : .62, b = m.get(i.id); if (b) b.to = to; else m.set(i.id, { x: i.x, y: i.y, r: i.r, a: 0, to }) })
+    m.forEach((b, id) => { if (!live.has(id)) b.to = 0 })
+  })
+
+  useEffect(() => {
+    const target = sel ?? (selMark && selected ? { x: 180, y: 252 + (+selected.slice(3)) * 82 } : null)
+    if (target) cam.focus(target.x, target.y, cam.cover() * 1.7, window.innerWidth > 900 ? 210 : 0)
     else cam.fit()
   }, [selected, week]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* Athena's gentle counsel, once */
   useEffect(() => {
     if (counselShown || week !== NOW_WEEK) return
     counselShown = true
-    const id = setTimeout(() => st.toast("Athena's counsel", COUNSEL[0], '🦉'), 7000)
+    const id = setTimeout(() => st.toast('Athena · counsel', COUNSEL[0]), 9000)
     return () => clearTimeout(id)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -190,6 +329,8 @@ export default function MapView() {
     stage.current!.setPointerCapture(e.pointerId)
   }
   const onPointerMove = (e: React.PointerEvent) => {
+    const c = cam.cur.current
+    if (coordRef.current) { const r = stage.current!.getBoundingClientRect(); const wx = (e.clientX - r.left - c.x) / c.k, wy = (e.clientY - r.top - c.y) / c.k; coordRef.current.textContent = `${fmtLat(wy)}  ${fmtLon(wx)}` }
     const d = drag.current; if (!d.on) return
     const dx = e.clientX - d.x, dy = e.clientY - d.y; d.moved += Math.abs(dx) + Math.abs(dy)
     const now = performance.now(), dt = Math.max(1, now - d.t); d.vx = dx / dt; d.vy = dy / dt; d.t = now; d.x = e.clientX; d.y = e.clientY
@@ -208,7 +349,7 @@ export default function MapView() {
   }
   useEffect(() => {
     const el = stage.current!
-    const wheel = (e: WheelEvent) => { e.preventDefault(); cam.zoomBy(Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0016)), e.clientX, e.clientY) }
+    const wheel = (e: WheelEvent) => { if ((e.target as HTMLElement).closest('.drawer')) return; e.preventDefault(); cam.zoomBy(Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0016)), e.clientX, e.clientY) }
     el.addEventListener('wheel', wheel, { passive: false }); return () => el.removeEventListener('wheel', wheel)
   }, [cam])
   useEffect(() => {
@@ -222,110 +363,93 @@ export default function MapView() {
     addEventListener('keydown', key); return () => removeEventListener('keydown', key)
   }, [cam])
 
-  const board = () => { cam.focus(SHIP.x, SHIP.y - 20, cam.cover() * 5.5); setTimeout(() => setRoute('deck'), 700) }
-  const burst = (x: number, y: number) => { const id = Date.now(); setBursts((b) => [...b, { id, x, y }]); setTimeout(() => setBursts((b) => b.filter((q) => q.id !== id)), 1400) }
+  const board = () => { const [x, y] = TRACK[week]; cam.focus(x, y, cam.cover() * 4.5); setTimeout(() => setRoute('deck'), 650) }
+  const land = (x: number, y: number) => { const id = Date.now(); setLandings((b) => [...b, { id, x, y }]); setTimeout(() => setLandings((b) => b.filter((q) => q.id !== id)), 2000) }
   const act = (i: LiveIsland, a: 'rescued' | 'dismissed' | 'done') => {
-    if (a === 'done') { st.set({ extraShipped: [...st.extraShipped, i.label] }); burst(i.x, i.y) }
-    if (a === 'rescued') burst(i.x, i.y)
+    if (a === 'done') st.set({ extraShipped: [...st.extraShipped, i.label] })
+    land(i.x, i.y)
     setStatus(i.id, a)
-    st.toast(a === 'done' ? 'Landed on the continent' : a === 'rescued' ? 'Rescued from the deep' : 'Let go, gently', i.label, a === 'done' ? '🚩' : a === 'rescued' ? '🛟' : '🌊')
+    st.toast(a === 'done' ? 'Landed · the Shipped Continent' : a === 'rescued' ? 'Rescued from the deep' : 'Let go, gently', i.label)
   }
 
-  const needs = islands.filter((i) => i.state === 'overdue' || i.flare).length
+  const needs = islands.filter((i) => i.state === 'overdue' || i.flare)
   const sinking = all.filter((i) => i.state === 'sinking').length
   const shipped = shippedCount(week, extraShipped.length)
+  const order = islands.map((i) => i.id)
 
   return (
-    <div className="map-stage" ref={stage} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}>
+    <div className="view map-stage" ref={stage} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}>
+      <canvas ref={sea} className="sea" aria-hidden="true" />
       <div className="map-world" ref={world} style={{ width: W, height: H }}>
         <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="group" aria-label="Sea chart of your work">
           <defs>
-            <pattern id="hatch" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><path d="M0 0V16" stroke="#8a6a3d" strokeWidth="1" opacity=".12" /></pattern>
-            <radialGradient id="stormfog"><stop offset="0" stopColor="#6c6a68" stopOpacity=".4" /><stop offset="1" stopColor="#6c6a68" stopOpacity="0" /></radialGradient>
+            <pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(-38)"><path d="M0 0V5" stroke="#e9e4d8" strokeWidth=".6" opacity=".16" /></pattern>
           </defs>
-          <rect width={W} height={H} fill="url(#hatch)" />
-          {/* graticule */}
-          <g stroke="#8a6a3d" strokeWidth="1" opacity=".22" fill="none">{[1, 2, 3, 4].map((n) => <path key={n} d={`M0 ${n * 200} H${W}`} strokeDasharray="1 9" strokeLinecap="round" />)}{[5, 7, 9, 11, 13, 15].map((n) => <path key={n} d={`M${n * 100} 0 V${H}`} strokeDasharray="1 9" strokeLinecap="round" />)}</g>
-          <Waves />
-          <circle cx="760" cy="420" r="260" fill="url(#stormfog)" className="fog" />
-          <Compass x={650} y={110} /><Dragon x={1230} y={950} />
-
-          {/* routes */}
-          <g fill="none" stroke="#5b4630" strokeWidth="2.2" strokeLinecap="round" strokeDasharray="2 9" opacity=".75">
+          <Graticule /><Rhumbs /><Soundings avoid={avoid} />
+          <g fill="none" stroke="var(--bone)" strokeWidth=".8" strokeDasharray="1 5" strokeLinecap="round" opacity=".5">
             {ROUTES.map(([a, b]) => {
               const A = islands.find((i) => i.id === a), B = islands.find((i) => i.id === b); if (!A || !B) return null
-              const mx = (A.x + B.x) / 2 + (B.y - A.y) * 0.12, my = (A.y + B.y) / 2 - (B.x - A.x) * 0.12
-              return <path key={a + b} className="route" d={`M${A.x} ${A.y} Q${mx} ${my} ${B.x} ${B.y}`} />
+              const mx = (A.x + B.x) / 2 + (B.y - A.y) * 0.14, my = (A.y + B.y) / 2 - (B.x - A.x) * 0.14
+              return <path key={a + b} className="route" d={`M${A.x} ${A.y} Q${mx} ${my} ${B.x} ${B.y}`} {...NS} />
             })}
           </g>
-
-          {/* shipped continent */}
+          <Rose />
           <Continent marks={marks} selected={selected} shipped={shipped} week={week} />
-
-          {/* islands */}
+          <Track week={week} />
           <AnimatePresence>
             {islands.map((i) => (
-              <g key={i.id} transform={`translate(${i.x},${i.y})`} data-isl={i.id} tabIndex={0} role="button" aria-label={`${i.label}, ${i.state}`} data-cursor="Inspect" onKeyDown={(e) => e.key === 'Enter' && select(i.id)}>
-                <motion.g initial={{ opacity: 0, scale: .7, y: 24 }} animate={{ opacity: i.state === 'sinking' ? .55 : 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: .6, y: 40 }} transition={{ type: 'spring', stiffness: 160, damping: 20 }}>
+              <g key={i.id} transform={`translate(${i.x},${i.y})`} data-isl={i.id} tabIndex={0} role="button" aria-label={`${i.label}, ${i.state}`} data-cursor="Survey" onKeyDown={(e) => e.key === 'Enter' && select(i.id)}>
+                <motion.g initial={{ opacity: 0, scale: .85 }} animate={{ opacity: i.state === 'sinking' ? .5 : 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: .9, transition: { duration: .6 } }} transition={{ duration: 1.1, ease: [.22, 1, .36, 1], delay: .2 + order.indexOf(i.id) * .05 }}>
                   <IslandArt isl={i} selected={selected === i.id} />
                 </motion.g>
               </g>
             ))}
           </AnimatePresence>
-          <Ship onBoard={board} />
-          {bursts.map((b) => <Burst key={b.id} x={b.x} y={b.y} />)}
+          <Ship week={week} onBoard={board} />
+          {landings.map((b) => <Landing key={b.id} x={b.x} y={b.y} />)}
         </svg>
       </div>
       <div className="map-vignette" aria-hidden="true" />
-      <div className="map-clouds" aria-hidden="true"><i /><i /><i /></div>
 
-      <div className="map-ctl glass" role="group" aria-label="Zoom">
-        <button onClick={() => cam.zoomBy(1.3)} aria-label="Zoom in" data-cursor="Zoom in">+</button>
-        <button onClick={() => cam.zoomBy(0.77)} aria-label="Zoom out" data-cursor="Zoom out">−</button>
-        <button onClick={() => select(null)} aria-label="Recenter" data-cursor="Recenter" onClickCapture={() => cam.fit()}>⌖</button>
-        <span>drag · scroll to explore</span>
+      <div className="map-ctl" role="group" aria-label="Chart controls">
+        <div className="zoom">
+          <button onClick={() => cam.zoomBy(1.3)} aria-label="Zoom in" data-cursor="Closer">+</button>
+          <button onClick={() => cam.zoomBy(0.77)} aria-label="Zoom out" data-cursor="Wider">−</button>
+          <button onClick={() => { select(null); cam.fit() }} aria-label="Whole chart" data-cursor="Whole chart" className="fit"><i /></button>
+        </div>
+        <div className="scale mono"><div className="bar" ref={scaleRef} /><span>5 nautical miles</span></div>
+        <p className="coord mono"><span ref={coordRef}>{fmtLat(500)}  {fmtLon(800)}</span></p>
+        <button className="link" onClick={() => st.set({ legend: true })}>Legend</button>
       </div>
 
-      <aside className="drawer" aria-live="polite">
+      <aside className="drawer" aria-live="polite" onPointerDown={(e) => e.stopPropagation()}>
         <AnimatePresence mode="wait">
-          {sel ? (
-            <motion.div key={sel.id} className="drawer-card" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 40 }} transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
-              <p className="eyebrow">Selected island</p>
-              <h2>{sel.label}</h2>
-              <div className="tags"><span className={`chip ${sel.src}`}>{sel.src}</span>
-                {sel.state === 'overdue' && <span className="chip warn">Needs attention</span>}
-                {sel.state === 'sinking' && <span className="chip red">Sinking · private</span>}
-                {sel.flare && <span className="chip warn">{sel.flare}</span>}
-                {st.status[sel.id] === 'rescued' && <span className="chip ok">Rescued</span>}</div>
-              <p className="quote">{sel.quote}</p>
-              <p>{sel.note}</p>
-              <dl><dt>Source</dt><dd>{sel.link}</dd><dt>Age</dt><dd>{sel.age} days{sel.state === 'overdue' ? ' · drifting toward rough water' : ''}</dd>
-                {st.notes[sel.id] && <><dt>Your note</dt><dd>{st.notes[sel.id]}</dd></>}</dl>
-              <div className="actions">
-                {sel.state === 'sinking' && <button className="btn teal" onClick={() => act(sel, 'rescued')}>🛟 Rescue</button>}
-                <button className="btn ink" onClick={() => act(sel, 'dismissed')}>Dismiss</button>
-                <button className="btn ink primary" onClick={() => act(sel, 'done')}>✓ Done</button>
-              </div>
-              <button className="link ink" onClick={() => select(null)}>← back to voyage log</button>
-            </motion.div>
-          ) : selMark ? (
-            <motion.div key={selected} className="drawer-card" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 40 }}>
-              <p className="eyebrow">The Shipped Continent</p><h2>{selMark.t}</h2><p>{selMark.d}</p>
-              <p className="quote">Landed in week {SHIPPED.find((s) => s.t === selMark.t)?.w ?? NOW_WEEK}</p>
-              <button className="link ink" onClick={() => select(null)}>← back to voyage log</button>
-            </motion.div>
+          {sel ? <IslandCard key={sel.id} sel={sel} n={order.indexOf(sel.id) + 1} act={act} /> : selMark ? (
+            <Panel key={selected}>
+              <p className="eyebrow"><i />The Shipped Continent</p>
+              <h2>{selMark.t.replace(/^(\w+): ?/, '')}</h2>
+              <div className="tags"><span className="tag brass"><span className="dot" />{selMark.t.match(/^(\w+)/)?.[1] ?? 'Shipped'}</span><span className="tag">Week {SHIPPED.find((s) => s.t === selMark.t)?.w ?? NOW_WEEK}</span></div>
+              <p className="body">{selMark.d}</p>
+              <button className="link back" onClick={() => select(null)}>← Back to the voyage log</button>
+            </Panel>
           ) : (
-            <motion.div key="log" className="drawer-card" initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 40 }}>
-              <p className="eyebrow">Voyage log · week {week}</p>
+            <Panel key={'log' + week}>
+              <p className="eyebrow"><i />Voyage log · W{week}</p>
+              <p className="wk mono dim">{WEEKS[week]}</p>
+              <h2>{HEADLINE[week]}</h2>
               <div className="stats">
-                <Stat n={shipped} l="Shipped" /><Stat n={needs} l="Needs attention" tone="red" />
-                {priv ? <Stat n={sinking} l="Sinking" /> : <div className="stat lock"><b>🔒</b><small>Hidden</small></div>}
+                <Stat n={shipped} l="Shipped" /><Stat n={needs.length} l="Needs you" tone="signal" />
+                {priv ? <Stat n={sinking} l="Slipping" /> : <div className="stat lock"><b>—</b><small className="mono">Hidden</small></div>}
               </div>
-              <Log text={VOYAGE[week]} />
-              <button className="btn ink primary" onClick={() => setRoute('log')}>Open the Captain's Log →</button>
-              <p className="fine">{priv ? '🔒 Private view: only you can see forgotten islands.' : '🧭 Manager lens: outcomes only, no forgotten waters.'} Sources: Slack · Zoom · GitHub · synced 7:30 PM. Example data.</p>
-            </motion.div>
+              <Survey text={VOYAGE[week]} />
+              {needs.length > 0 && <div className="needs">
+                <p className="mono dim">Needs you</p>
+                {needs.map((i) => <button key={i.id} className="need" onClick={() => select(i.id)} data-cursor="Survey"><span className="mono n">{pad(order.indexOf(i.id) + 1)}</span><b>{i.label}</b><small className="mono">{i.flare ? 'review · 6h' : `${i.age}d over`}</small><span className="arr">→</span></button>)}
+              </div>}
+              <button className="btn solid wide" onClick={() => setRoute('log')} data-cursor="Open">Open the Captain's Log <span className="arr">→</span></button>
+              <p className="fine mono">{priv ? 'Private view · forgotten islands are visible only to you' : 'Manager lens · outcomes only, no forgotten waters'}<br />Slack · Zoom · GitHub · synced 7:30 PM</p>
+            </Panel>
           )}
         </AnimatePresence>
       </aside>
@@ -333,41 +457,42 @@ export default function MapView() {
   )
 }
 
-const Stat = ({ n, l, tone }: { n: number; l: string; tone?: string }) => { const v = useCountUp(n); return <div className={`stat ${tone ?? ''}`}><b>{v}</b><small>{l}</small></div> }
-const Log = ({ text }: { text: string }) => { const t = useTypewriter(text, 14); return <p className="athena">{t.text}<i className="caret" /></p> }
-
-const Burst = ({ x, y }: { x: number; y: number }) => (
-  <g transform={`translate(${x},${y})`} pointerEvents="none">
-    {Array.from({ length: 14 }, (_, i) => { const a = (i / 14) * Math.PI * 2; return <motion.circle key={i} fill={i % 2 ? '#d3a444' : '#b4432d'} initial={{ cx: 0, cy: 0, opacity: 1, r: i % 3 ? 4 : 6 }} animate={{ cx: Math.cos(a) * 120, cy: Math.sin(a) * 90 - 30, opacity: 0, r: 1 }} transition={{ duration: 1.1, ease: 'easeOut' }} /> })}
-    <motion.circle fill="none" stroke="#d3a444" strokeWidth="3" initial={{ r: 10, opacity: 1 }} animate={{ r: 110, opacity: 0 }} transition={{ duration: 1 }} />
-  </g>
+const Panel = ({ children }: { children: React.ReactNode }) => (
+  <motion.div className="drawer-card" initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: .55, ease: [.22, 1, .36, 1] }}>{children}</motion.div>
 )
 
-const Continent = memo(function Continent({ marks, selected, shipped, week }: { marks: { t: string; d: string; isNew: boolean }[]; selected: string | null; shipped: number; week: number }) {
-  const d = useMemo(() => {
-    const r = rng(77); let p = `M-20 -20 H${360}`
-    const pts: [number, number][] = []
-    for (let y = -20; y <= H + 20; y += 60) pts.push([500 + Math.sin(y / 120) * 26 + (r() - .5) * 46, y])
-    p = `M-30 -30 L${pts[0][0]} ${pts[0][1]}` + pts.slice(1).map(([x, y]) => ` L${x.toFixed(0)} ${y}`).join('') + ` L-30 ${H + 30}Z`
-    return p
-  }, [])
+function IslandCard({ sel, n, act }: { sel: LiveIsland; n: number; act: (i: LiveIsland, a: 'rescued' | 'dismissed' | 'done') => void }) {
+  const { status, notes, select } = useStore()
   return (
-    <g className="continent">
-      <path d={d} fill="#d8bb80" stroke="#5b4630" strokeWidth="3.4" strokeLinejoin="round" />
-      <path d={d} transform="translate(-14,0)" fill="none" stroke="#5b4630" strokeWidth="1.4" strokeDasharray="3 7" opacity=".5" />
-      <g stroke="#8a6a3d" strokeWidth="1" opacity=".3">{Array.from({ length: 30 }, (_, i) => <path key={i} d={`M0 ${i * 36 + 20} H${300 + (i % 3) * 16}`} strokeDasharray="1 6" />)}</g>
-      <text x="112" y="108" className="cont-t">THE SHIPPED</text><text x="112" y="152" className="cont-t">CONTINENT</text>
-      <text x="114" y="184" className="hand-t sm2">{shipped} landings this week</text>
-      {marks.map((m, i) => {
-        const x = 112 + (i % 2) * 18, y = 250 + i * 84
-        return (
-          <g key={m.t} data-sh={i} role="button" tabIndex={0} data-cursor="Read" className={`landmark${selected === 'sh:' + i ? ' sel' : ''}${m.isNew && week > 0 ? ' fresh' : ''}`} style={{ animationDelay: `${i * 0.09}s` }}>
-            <path d={`M${x} ${y} v-34`} stroke="#3a2a1a" strokeWidth="3" strokeLinecap="round" /><path className="flag" d={`M${x} ${y - 34} h26 l-7 8 7 8 h-26z`} fill="#b4432d" stroke="#3a2a1a" strokeWidth="1.6" strokeLinejoin="round" />
-            <text x={x + 40} y={y - 6} className="mark-t">{m.t}</text>
-          </g>
-        )
-      })}
-      <Mountains x={130} y={975} />
-    </g>
+    <Panel>
+      <p className="eyebrow"><i />Survey · island {pad(n)}</p>
+      <p className="wk mono dim">{fmtLat(sel.y)} · {fmtLon(sel.x)}</p>
+      <h2>{sel.label}</h2>
+      <div className="tags">
+        <span className="tag">{sel.src}</span>
+        {sel.state === 'overdue' && <span className="tag signal"><span className="dot" />Overdue</span>}
+        {sel.state === 'sinking' && <span className="tag">Slipping · private</span>}
+        {sel.flare && <span className="tag signal"><span className="dot" />{sel.flare}</span>}
+        {status[sel.id] === 'rescued' && <span className="tag brass">Rescued</span>}
+        {sel.who && <span className="tag">with {sel.who}</span>}
+      </div>
+      <blockquote>{sel.quote}</blockquote>
+      <p className="body">{sel.note}</p>
+      <dl className="mono">
+        <dt>Source</dt><dd>{sel.link}</dd>
+        <dt>Age</dt><dd>{sel.age} days{sel.state === 'overdue' ? ' · in rough water' : ''}</dd>
+        <dt>First seen</dt><dd>Week {sel.born}</dd>
+        {notes[sel.id] && <><dt>Your note</dt><dd>{notes[sel.id]}</dd></>}
+      </dl>
+      <div className="actions">
+        {sel.state === 'sinking' && <button className="btn solid" onClick={() => act(sel, 'rescued')}>Rescue it</button>}
+        <button className={`btn${sel.state === 'sinking' ? '' : ' solid'}`} onClick={() => act(sel, 'done')}>Mark shipped</button>
+        <button className="btn" onClick={() => act(sel, 'dismissed')}>Let it go</button>
+      </div>
+      <button className="link back" onClick={() => select(null)}>← Back to the voyage log</button>
+    </Panel>
   )
-})
+}
+
+const Stat = ({ n, l, tone }: { n: number; l: string; tone?: string }) => { const v = useCountUp(n); return <div className={`stat ${tone ?? ''}`}><b>{pad(v)}</b><small className="mono">{l}</small></div> }
+const Survey = ({ text }: { text: string }) => { const t = useTypewriter(text, 16); return <p className="survey"><span className="mono">Athena's survey</span>{t.text}<i className="caret" /></p> }
